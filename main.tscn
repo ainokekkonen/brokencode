@@ -1,0 +1,30 @@
+[gd_scene load_steps=4 format=3 uid="uid://6f3c4qu33jv6"]
+
+[ext_resource type="Script" uid="uid://cpo5u81a17fmc" path="res://main.gd" id="1_h2yge"]
+[ext_resource type="Texture2D" uid="uid://bh0642ndy0r7h" path="res://aseprite/ASEPRITE/exitreal1.png" id="2_1bvp3"]
+[ext_resource type="Texture2D" uid="uid://c17vpaqrjm82y" path="res://aseprite/ASEPRITE/exitreal2.png" id="3_lquwl"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_h2yge")
+
+[node name="Play" type="TextureButton" parent="."]
+custom_minimum_size = Vector2(128, 64)
+offset_left = 402.0
+offset_top = 28.0
+offset_right = 594.0
+offset_bottom = 220.0
+scale = Vector2(0.665, 0.665)
+texture_normal = ExtResource("2_1bvp3")
+stretch_mode = 5
+
+[node name="Exit" type="TextureButton" parent="."]
+custom_minimum_size = Vector2(128, 64)
+offset_left = 404.00003
+offset_top = 125.00001
+offset_right = 596.0
+offset_bottom = 317.0
+scale = Vector2(0.665, 0.665)
+texture_normal = ExtResource("3_lquwl")
+
+[connection signal="pressed" from="Play" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="Exit" to="." method="_on_exit_pressed"]
