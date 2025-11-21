@@ -1,7 +1,15 @@
-[gd_scene load_steps=2 format=3 uid="uid://bfvfl6q7ojl5k"]
+[gd_scene load_steps=3 format=3 uid="uid://bfvfl6q7ojl5k"]
 
 [ext_resource type="PackedScene" uid="uid://b8xoe0vg217kk" path="res://bg.tscn" id="1_f3sb7"]
+[ext_resource type="PackedScene" uid="uid://byjfkpmkypwvg" path="res://player/player.tscn" id="2_fj7yv"]
 
 [node name="World" type="Node2D"]
+position = Vector2(3, 2)
 
 [node name="BG" parent="." instance=ExtResource("1_f3sb7")]
+offset = Vector2(951, 544)
+scale = Vector2(1.004, 0.995)
+transform = Transform2D(1.004, 0, 0, 0.995, 951, 544)
+
+[node name="Player" parent="." instance=ExtResource("2_fj7yv")]
+position = Vector2(1809, 909)
