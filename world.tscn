@@ -1,5 +1,7 @@
-[gd_scene format=3 uid="uid://bfvfl6q7ojl5k"]
+[gd_scene load_steps=2 format=3 uid="uid://bfvfl6q7ojl5k"]
+
+[ext_resource type="PackedScene" uid="uid://b8xoe0vg217kk" path="res://bg.tscn" id="1_f3sb7"]
 
 [node name="World" type="Node2D"]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="BG" parent="." instance=ExtResource("1_f3sb7")]

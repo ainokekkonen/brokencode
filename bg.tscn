@@ -1,3 +1,19 @@
-[gd_scene format=3 uid="uid://b8xoe0vg217kk"]
+[gd_scene load_steps=3 format=3 uid="uid://b8xoe0vg217kk"]
+
+[ext_resource type="Texture2D" uid="uid://baq7ds0d07yen" path="res://aseprite/ASEPRITE/backgroundanms/BACKGROUNDMENU1.png" id="1_t4gw0"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ptgyr"]
+size = Vector2(1140, 20)
 
 [node name="BG" type="ParallaxBackground"]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(0.5, 0.5)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(553, 446)
+shape = SubResource("RectangleShape2D_ptgyr")
+
+[node name="Backgroundmenu1" type="Sprite2D" parent="."]
+position = Vector2(522, 257)
+texture = ExtResource("1_t4gw0")

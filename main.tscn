@@ -145,7 +145,7 @@ animations = [{
 script = ExtResource("1_h2yge")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-position = Vector2(959.50006, 539.5)
+position = Vector2(951, 544.00006)
 scale = Vector2(1.0036459, 0.9953704)
 sprite_frames = SubResource("SpriteFrames_rqtf5")
 animation = &"menu_bgreal"
