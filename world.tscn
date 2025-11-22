@@ -59,6 +59,7 @@ position = Vector2(3, 2)
 position = Vector2(-460, -1278)
 tile_set = SubResource("TileSet_036b0")
 format = 2
+layer_0/tile_data = PackedInt32Array(1572872, 65538, 0, 1572873, 65538, 0, 1572874, 65538, 0, 1572875, 65538, 0, 1572876, 65538, 0, 1572877, 65538, 0)
 
 [node name="Player" parent="." instance=ExtResource("2_fj7yv")]
 position = Vector2(228, 171)
