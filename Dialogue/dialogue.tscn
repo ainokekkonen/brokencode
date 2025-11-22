@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://c6dj34ys6d83g"]
+
+[ext_resource type="Texture2D" uid="uid://cpyh57oh33hr3" path="res://aseprite/ASEPRITE/dialoguebox-export.png" id="1_1ei20"]
+
+[node name="Dialogue" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="NinePatchRect" type="NinePatchRect" parent="."]
+layout_mode = 0
+offset_left = -71.0
+offset_top = -234.0
+offset_right = 427.0
+offset_bottom = 357.0
+texture = ExtResource("1_1ei20")
