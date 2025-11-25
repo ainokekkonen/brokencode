@@ -4,9 +4,9 @@
 [ext_resource type="Texture2D" uid="uid://bh0642ndy0r7h" path="res://aseprite/ASEPRITE/exitreal1.png" id="2_1bvp3"]
 [ext_resource type="Texture2D" uid="uid://c17vpaqrjm82y" path="res://aseprite/ASEPRITE/exitreal2.png" id="3_lquwl"]
 [ext_resource type="Texture2D" uid="uid://baq7ds0d07yen" path="res://aseprite/ASEPRITE/backgroundanms/BACKGROUNDMENU1.png" id="34_1vm84"]
-[ext_resource type="Script" uid="uid://bqjiw4h0cby2r" path="res://bg.gd" id="34_ok6jj"]
 [ext_resource type="Texture2D" uid="uid://o5mbwllnkcw5" path="res://aseprite/ASEPRITE/backgroundanms/BACKGROUNDMENU2.png" id="35_wu3dr"]
 [ext_resource type="Texture2D" uid="uid://cqyjnkl46jmoj" path="res://aseprite/ASEPRITE/backgroundanms/BACKGROUNDMENU3.png" id="36_cyx1q"]
+[ext_resource type="PackedScene" uid="uid://h4bnh2vwcxal" path="res://fadetransition.tscn" id="36_ok6jj"]
 [ext_resource type="Texture2D" uid="uid://dxfvf0d44uyd2" path="res://aseprite/ASEPRITE/backgroundanms/BACKGROUNDMENU4.png" id="37_0dhbp"]
 [ext_resource type="Texture2D" uid="uid://mrey0jgtgpk8" path="res://aseprite/ASEPRITE/backgroundanms/BACKGROUNDMENU5.png" id="38_jx0wj"]
 [ext_resource type="Texture2D" uid="uid://de2it8rau51fe" path="res://aseprite/ASEPRITE/backgroundanms/BACKGROUNDMENU6.png" id="39_kkkcx"]
@@ -37,7 +37,7 @@
 [ext_resource type="Texture2D" uid="uid://j26tmpnmecbl" path="res://aseprite/ASEPRITE/backgroundanms/BACKGROUNDMENU31.png" id="64_yvsr8"]
 [ext_resource type="Texture2D" uid="uid://ef035mwwwac3" path="res://aseprite/ASEPRITE/backgroundanms/BACKGROUNDMENU32.png" id="65_vieuh"]
 
-[sub_resource type="SpriteFrames" id="SpriteFrames_rqtf5"]
+[sub_resource type="SpriteFrames" id="SpriteFrames_0rl1p"]
 animations = [{
 "frames": [{
 "duration": 1.0,
@@ -137,7 +137,7 @@ animations = [{
 "texture": ExtResource("65_vieuh")
 }],
 "loop": true,
-"name": &"menu_bgreal",
+"name": &"BG",
 "speed": 9.0
 }]
 
@@ -145,47 +145,55 @@ animations = [{
 script = ExtResource("1_h2yge")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-position = Vector2(951, 544.00006)
-scale = Vector2(1.0036459, 0.9953704)
-sprite_frames = SubResource("SpriteFrames_rqtf5")
-animation = &"menu_bgreal"
-frame_progress = 0.41380748
-script = ExtResource("34_ok6jj")
+position = Vector2(958, 525.5)
+scale = Vector2(1, 1.0416667)
+sprite_frames = SubResource("SpriteFrames_0rl1p")
+animation = &"BG"
+frame_progress = 0.65099716
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="ButtonManager" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="Play" type="TextureButton" parent="UI"]
-custom_minimum_size = Vector2(128, 64)
+[node name="Play" type="TextureButton" parent="ButtonManager"]
+layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -78.99994
-offset_top = -151.0
-offset_right = 113.0
-offset_bottom = 41.0
+offset_left = 803.0
+offset_top = 359.0
+offset_right = 995.0
+offset_bottom = 551.0
 grow_horizontal = 2
 grow_vertical = 2
-scale = Vector2(0.665, 0.665)
 texture_normal = ExtResource("2_1bvp3")
-stretch_mode = 5
 
-[node name="Exit" type="TextureButton" parent="UI"]
-custom_minimum_size = Vector2(128, 64)
+[node name="Exit" type="TextureButton" parent="ButtonManager"]
+layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -82.0
-offset_top = -34.0
-offset_right = 110.0
-offset_bottom = 158.0
+offset_left = 877.0
+offset_top = 458.0
+offset_right = 1069.0
+offset_bottom = 650.0
 grow_horizontal = 2
 grow_vertical = 2
-scale = Vector2(0.665, 0.665)
 texture_normal = ExtResource("3_lquwl")
 
-[connection signal="pressed" from="UI/Play" to="." method="_on_play_pressed"]
-[connection signal="pressed" from="UI/Exit" to="." method="_on_exit_pressed"]
+[node name="Fade_transition" parent="." instance=ExtResource("36_ok6jj")]
+visible = false
+
+[node name="Fade_timer" type="Timer" parent="Fade_transition"]
+
+[connection signal="pressed" from="ButtonManager/Play" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="ButtonManager/Exit" to="." method="_on_exit_pressed"]
+[connection signal="timeout" from="Fade_transition/Fade_timer" to="." method="_on_fade_timer_timeout"]
