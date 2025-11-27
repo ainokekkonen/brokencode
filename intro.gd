@@ -2,11 +2,14 @@
 extends Control
 
 @export var lines: Array[String] = [
-	"The world, as we know it, overcame long-lasting chaos by great effort. ",
-	"Everything was shaped by balance.",
-	"That is until recent events.",
-	"Now by unknown forces, the world is losing its balance and once again,",
-    "returning to chaos."
+	"To preserve reality, humanity forged minds of metal and code",
+	"—machines designed to maintain balance.",
+	"And balance did prevail,",
+	"For a time.",
+	"Now, unseen algorithms stir beneath the surface.",
+	"Systems once built to preserve order have begun rewriting the rules.",
+	"And with it,",
+    "Reality itself."
 ]
 
 @export var typing_speed: float = 0.05
@@ -33,17 +36,11 @@ func type_next_character():
 	if current_line >= lines.size():
 		typing_done = true
 		print("Typing finished!")
-		return
-
+		return  # Do NOT auto-change scene; wait for click
 	var text = lines[current_line]
 	if current_index < text.length():
 		if skipping:
-			print("Skipping typing...")
-			$Label.text = ""
-			for line in lines:
-				$Label.text += line + "\n"
-			typing_done = true
-			print("All text shown instantly.")
+			show_all_text()
 			return
 		$Label.text += text[current_index]
 		current_index += 1
@@ -59,12 +56,24 @@ func type_next_character():
 
 func _process(delta):
 	if Input.is_action_just_pressed("skip_cutscene"):
-		print("Click detected! typing_done =", typing_done)
 		if not typing_done:
+			# First click during typing → skip typing
 			skipping = true
+			show_all_text()
 		else:
-			if ResourceLoader.exists(next_scene_path):
-				print("Changing scene to:", next_scene_path)
-				get_tree().change_scene_to_file(next_scene_path)
-			else:
-				push_error("Scene path does not exist: " + next_scene_path)
+			# Second click after typing done → change scene
+			change_to_next_scene()
+
+func show_all_text():
+	$Label.text = ""
+	for line in lines:
+		$Label.text += line + "\n"
+	typing_done = true
+	print("All text shown instantly.")
+
+func change_to_next_scene():
+	if ResourceLoader.exists(next_scene_path):
+		print("Changing scene to:", next_scene_path)
+		get_tree().change_scene_to_file(next_scene_path)
+	else:
+		push_error("Scene path does not exist: " + next_scene_path)
