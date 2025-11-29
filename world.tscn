@@ -1,10 +1,12 @@
-[gd_scene load_steps=9 format=3 uid="uid://bfvfl6q7ojl5k"]
+[gd_scene load_steps=11 format=3 uid="uid://bfvfl6q7ojl5k"]
 
 [ext_resource type="Script" uid="uid://nqjevr1oe0fk" path="res://world.gd" id="1_aqk2v"]
 [ext_resource type="PackedScene" uid="uid://byjfkpmkypwvg" path="res://player/player.tscn" id="2_fj7yv"]
 [ext_resource type="Texture2D" uid="uid://rrexpbudkv" path="res://aseprite/ASEPRITE/Tileset/TILESET.png" id="2_tlwt5"]
 [ext_resource type="PackedScene" uid="uid://h4bnh2vwcxal" path="res://fadetransition.tscn" id="4_036b0"]
 [ext_resource type="PackedScene" uid="uid://dcawgstd56i7m" path="res://glitch.tscn" id="5_036b0"]
+[ext_resource type="PackedScene" uid="uid://dgbu50bcup703" path="res://canvas_layer.tscn" id="6_pkg7o"]
+[ext_resource type="PackedScene" uid="uid://bjmfsywajhuxd" path="res://parallax_2d.tscn" id="7_gbfbk"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_aqk2v"]
 texture = ExtResource("2_tlwt5")
@@ -59,6 +61,10 @@ distance = -858.0
 position = Vector2(3, 2)
 script = ExtResource("1_aqk2v")
 
+[node name="Parallax2D" parent="." instance=ExtResource("7_gbfbk")]
+z_index = -10
+scroll_offset = Vector2(651, 54)
+
 [node name="TileMap" type="TileMap" parent="."]
 position = Vector2(-460, -1278)
 tile_set = SubResource("TileSet_036b0")
@@ -69,7 +75,7 @@ layer_0/tile_data = PackedInt32Array(1966149, 262146, 1, 1900613, 262146, 1, 183
 position = Vector2(170, 181)
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
-position = Vector2(40, -2)
+position = Vector2(41, -2)
 zoom = Vector2(0.75, 0.75)
 limit_left = -9999081
 limit_top = -9999648
@@ -97,3 +103,5 @@ grow_vertical = 2
 
 [node name="glitch" parent="." instance=ExtResource("5_036b0")]
 position = Vector2(390, 167)
+
+[node name="CanvasLayer2" parent="." instance=ExtResource("6_pkg7o")]

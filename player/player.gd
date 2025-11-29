@@ -53,6 +53,10 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 
+func _process(delta):
+	var player = get_node("Player")
+	if player:
+		position = player.position
 
 
 
