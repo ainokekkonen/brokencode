@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://bfvfl6q7ojl5k"]
+[gd_scene load_steps=9 format=3 uid="uid://bfvfl6q7ojl5k"]
 
 [ext_resource type="Script" uid="uid://nqjevr1oe0fk" path="res://world.gd" id="1_aqk2v"]
 [ext_resource type="PackedScene" uid="uid://byjfkpmkypwvg" path="res://player/player.tscn" id="2_fj7yv"]
 [ext_resource type="Texture2D" uid="uid://rrexpbudkv" path="res://aseprite/ASEPRITE/Tileset/TILESET.png" id="2_tlwt5"]
 [ext_resource type="PackedScene" uid="uid://h4bnh2vwcxal" path="res://fadetransition.tscn" id="4_036b0"]
+[ext_resource type="PackedScene" uid="uid://dcawgstd56i7m" path="res://glitch.tscn" id="5_036b0"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_aqk2v"]
 texture = ExtResource("2_tlwt5")
@@ -82,13 +83,17 @@ position = Vector2(208, 207)
 shape = SubResource("WorldBoundaryShape2D_fj7yv")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
+follow_viewport_enabled = true
 
 [node name="Fade_transition" parent="CanvasLayer" instance=ExtResource("4_036b0")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = 0.0
-offset_bottom = 0.0
+offset_right = 898100.0
+offset_bottom = 8998920.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="glitch" parent="." instance=ExtResource("5_036b0")]
+position = Vector2(390, 167)
