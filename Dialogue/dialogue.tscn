@@ -27,5 +27,4 @@ theme_override_colors/default_color = Color(0, 0.47394264, 0.4739427, 1)
 theme_override_colors/font_selected_color = Color(0.0957719, 0.541634, 0.53416145, 0)
 theme_override_fonts/normal_font = ExtResource("2_je2oo")
 theme_override_font_sizes/normal_font_size = 24
-text = "name"
 fit_content = true

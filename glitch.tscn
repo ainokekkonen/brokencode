@@ -27,6 +27,8 @@ animations = [{
 [node name="glitch" type="CharacterBody2D"]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(21.5, 17)
+scale = Vector2(1.671875, 1.53125)
 sprite_frames = SubResource("SpriteFrames_e3b7u")
 animation = &"move"
 frame = 1
