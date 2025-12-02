@@ -182,4 +182,4 @@ text = "..."
 autowrap_mode = 1
 
 [node name="Enemy1" parent="." instance=ExtResource("5_ioo17")]
-position = Vector2(395, 240)
+position = Vector2(433, 231)
