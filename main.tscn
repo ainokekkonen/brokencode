@@ -147,7 +147,7 @@ animations = [{
 script = ExtResource("1_h2yge")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-position = Vector2(958, 525.5)
+position = Vector2(941, 532)
 scale = Vector2(1, 1.0416667)
 sprite_frames = SubResource("SpriteFrames_0rl1p")
 animation = &"BG"

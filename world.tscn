@@ -101,7 +101,7 @@ script = ExtResource("1_aqk2v")
 
 [node name="Parallax2D" parent="." instance=ExtResource("7_gbfbk")]
 z_index = -10
-scroll_offset = Vector2(6151, 233)
+scroll_offset = Vector2(6076, 230)
 
 [node name="TileMap" type="TileMap" parent="."]
 position = Vector2(-460, -1278)
