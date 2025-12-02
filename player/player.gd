@@ -54,7 +54,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(delta):
-	var player = get_node("Player")
+	var player = get_tree().get_first_node_in_group("player")
 	if player:
 		position = player.position
 
