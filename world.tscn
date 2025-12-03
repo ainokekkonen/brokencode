@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://dgbu50bcup703" path="res://canvas_layer.tscn" id="6_pkg7o"]
 [ext_resource type="PackedScene" uid="uid://bjmfsywajhuxd" path="res://parallax_2d.tscn" id="7_gbfbk"]
 [ext_resource type="FontFile" uid="uid://cwn66fpautar3" path="res://aseprite/MedodicaRegular.otf" id="8_gbfbk"]
-[ext_resource type="Texture2D" uid="uid://cpyh57oh33hr3" path="res://aseprite/ASEPRITE/dialoguebox-export.png" id="8_ioo17"]
+[ext_resource type="Texture2D" uid="uid://k76cqny18f3y" path="res://aseprite/ASEPRITE/SPEECH.png" id="8_wse8f"]
 [ext_resource type="PackedScene" uid="uid://xt8g34iilisr" path="res://pause_menu.tscn" id="10_wse8f"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_aqk2v"]
@@ -168,7 +168,7 @@ offset_left = -15.0
 offset_top = 156.0
 offset_right = 449.0
 offset_bottom = 592.0
-texture = ExtResource("8_ioo17")
+texture = ExtResource("8_wse8f")
 
 [node name="Label" type="Label" parent="Cutscene/Dialogue/Background"]
 layout_mode = 0

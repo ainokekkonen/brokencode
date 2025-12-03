@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://c6dj34ys6d83g"]
 
-[ext_resource type="Texture2D" uid="uid://cpyh57oh33hr3" path="res://aseprite/ASEPRITE/dialoguebox-export.png" id="1_1ei20"]
+[ext_resource type="Texture2D" uid="uid://k76cqny18f3y" path="res://aseprite/ASEPRITE/SPEECH.png" id="1_je2oo"]
 [ext_resource type="FontFile" uid="uid://cwn66fpautar3" path="res://aseprite/MedodicaRegular.otf" id="2_je2oo"]
 
 [node name="Dialogue" type="Control"]
@@ -15,7 +15,7 @@ offset_left = -71.0
 offset_top = -234.0
 offset_right = 668.0
 offset_bottom = 431.0
-texture = ExtResource("1_1ei20")
+texture = ExtResource("1_je2oo")
 
 [node name="Name" type="RichTextLabel" parent="NinePatchRect"]
 layout_mode = 0
