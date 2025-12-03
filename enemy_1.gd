@@ -27,7 +27,7 @@ func _process(delta):
 		velocity.y += gravity * delta
 		velocity.x = 0
 	
-	player = Global.playerBody
+	
 	
 	move(delta)
 	handle_animation()
