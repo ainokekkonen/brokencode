@@ -13,6 +13,7 @@ extends Node2D
 @onready var dialogue_ui = $DialogueUI   # CanvasLayer for interactive dialogue
 @onready var npc = $npc                  # NPC node in the world
 
+
 func _ready():
 	# Hide UI initially
 	objective_label.visible = false

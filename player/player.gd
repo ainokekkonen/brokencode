@@ -7,6 +7,8 @@ const MAX_JUMPS = 2  # Allow double jump
 
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 
+
+
 var jump_count: int = 0
 
 func _physics_process(delta: float) -> void:
@@ -67,6 +69,7 @@ var health: int = max_health
 
 func _ready():
 	emit_signal("health_changed", health) # Lähetetään alkuarvo
+
 
 func take_damage(amount: int):
 		health = clamp(health - amount, 0, max_health)
