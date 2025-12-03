@@ -1,30 +1,45 @@
-[gd_scene load_steps=3 format=3 uid="uid://c6dj34ys6d83g"]
+[gd_scene load_steps=4 format=3 uid="uid://c6dj34ys6d83g"]
 
 [ext_resource type="Texture2D" uid="uid://k76cqny18f3y" path="res://aseprite/ASEPRITE/SPEECH.png" id="1_je2oo"]
+[ext_resource type="Script" uid="uid://bq5guekebcoa" path="res://Dialogue/dialoguePlayer.gd" id="1_jx425"]
 [ext_resource type="FontFile" uid="uid://cwn66fpautar3" path="res://aseprite/MedodicaRegular.otf" id="2_je2oo"]
 
-[node name="Dialogue" type="Control"]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="DialogueUI" type="CanvasLayer"]
+script = ExtResource("1_jx425")
 
 [node name="NinePatchRect" type="NinePatchRect" parent="."]
-layout_mode = 0
-offset_left = -71.0
-offset_top = -234.0
-offset_right = 668.0
-offset_bottom = 431.0
+offset_left = 255.0
+offset_top = 793.0
+offset_right = 1592.0
+offset_bottom = 1047.0
 texture = ExtResource("1_je2oo")
+region_rect = Rect2(87.789474, 200.1842, 356.8781, 99.83258)
 
-[node name="Name" type="RichTextLabel" parent="NinePatchRect"]
+[node name="name_label" type="RichTextLabel" parent="NinePatchRect"]
 layout_mode = 0
-offset_left = 167.0
-offset_top = 316.0
-offset_right = 616.0
-offset_bottom = 356.0
-theme_override_colors/default_color = Color(0, 0.47394264, 0.4739427, 1)
-theme_override_colors/font_selected_color = Color(0.0957719, 0.541634, 0.53416145, 0)
+offset_left = 74.0
+offset_top = 49.0
+offset_right = 405.0
+offset_bottom = 104.0
+theme_override_colors/default_color = Color(0.24313726, 1, 1, 1)
 theme_override_fonts/normal_font = ExtResource("2_je2oo")
-theme_override_font_sizes/normal_font_size = 24
-fit_content = true
+theme_override_font_sizes/normal_font_size = 40
+text = "Strange robot"
+
+[node name="chat_label" type="RichTextLabel" parent="NinePatchRect"]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 111.0
+offset_right = 1258.0
+offset_bottom = 188.0
+theme_override_colors/default_color = Color(0.24313726, 1, 1, 1)
+theme_override_fonts/normal_font = ExtResource("2_je2oo")
+theme_override_font_sizes/normal_font_size = 32
+text = "chatting..."
+
+[node name="choice_container" type="VBoxContainer" parent="NinePatchRect"]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 92.0
+offset_right = 1273.0
+offset_bottom = 189.0

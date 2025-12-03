@@ -1,10 +1,10 @@
-[gd_scene load_steps=33 format=3 uid="uid://dmhxjf0enx5rx"]
+[gd_scene load_steps=37 format=3 uid="uid://dmhxjf0enx5rx"]
 
 [ext_resource type="Script" uid="uid://bbyc4ler5ykjc" path="res://npc.gd" id="1_bc6q4"]
 [ext_resource type="Texture2D" uid="uid://d2ojqidq5llhi" path="res://aseprite/ASEPRITE/NPC/npcDEATH.png" id="1_kh24r"]
 [ext_resource type="Texture2D" uid="uid://dyxxsqkvhypum" path="res://aseprite/ASEPRITE/NPC/npcHURT.png" id="2_ul7y6"]
 [ext_resource type="Texture2D" uid="uid://bltffftsiiqop" path="res://aseprite/ASEPRITE/NPC/npcIDLE.png" id="3_bc6q4"]
-[ext_resource type="PackedScene" uid="uid://c6dj34ys6d83g" path="res://Dialogue/dialogue.tscn" id="5_mcvl2"]
+[ext_resource type="Texture2D" uid="uid://ck0ca5l1fdqfx" path="res://aseprite/ASEPRITE/NPC/npcSTATIC.png" id="5_bc6q4"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_mcvl2"]
 atlas = ExtResource("1_kh24r")
@@ -102,6 +102,26 @@ region = Rect2(384, 0, 128, 128)
 atlas = ExtResource("3_bc6q4")
 region = Rect2(512, 0, 128, 128)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_37qyk"]
+atlas = ExtResource("5_bc6q4")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e4neo"]
+atlas = ExtResource("5_bc6q4")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l0tg3"]
+atlas = ExtResource("5_bc6q4")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_q2dnk"]
+atlas = ExtResource("5_bc6q4")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2a7ac"]
+atlas = ExtResource("5_bc6q4")
+region = Rect2(512, 0, 128, 128)
+
 [sub_resource type="SpriteFrames" id="SpriteFrames_37qyk"]
 animations = [{
 "frames": [{
@@ -190,37 +210,41 @@ animations = [{
 "loop": true,
 "name": &"idle",
 "speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_37qyk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e4neo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l0tg3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_q2dnk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2a7ac")
+}],
+"loop": true,
+"name": &"static",
+"speed": 10.0
 }]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_e4neo"]
-radius = 28.160255
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_l0tg3"]
-radius = 178.01123
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ul7y6"]
+radius = 40.0
+height = 182.0
 
 [node name="npc" type="CharacterBody2D"]
 script = ExtResource("1_bc6q4")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_37qyk")
-animation = &"idle"
-frame_progress = 0.84972155
+animation = &"static"
+frame = 3
+frame_progress = 0.027179923
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(18, -4)
-shape = SubResource("CircleShape2D_e4neo")
-
-[node name="ChatDetection" type="Area2D" parent="."]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="ChatDetection"]
-position = Vector2(18, 6)
-shape = SubResource("CircleShape2D_l0tg3")
-
-[node name="Timer" type="Timer" parent="."]
-autostart = true
-
-[node name="Dialogue" parent="." instance=ExtResource("5_mcvl2")]
-offset_left = -293.0
-offset_top = 55.0
-offset_right = 298.0
-offset_bottom = 344.0
+position = Vector2(19, 10)
+shape = SubResource("CapsuleShape2D_ul7y6")

@@ -1,0 +1,64 @@
+
+[
+    {
+        "name": "Strange robot",
+        "text": "You found me! Thank the algorithm!"
+    },
+    {
+        "name": "Player",
+        "choices": [
+            "What is going on?",
+            "Who are you?"
+        ]
+    },
+    {
+        "name": "Strange robot",
+        "text": "Listen to me. We need to be quick. I don’t have much longer."
+    },
+    {
+        "name": "Player",
+        "choices": [
+            "Did you send that glitch? Why are the service robots hostile?",
+            "Do you know what's happening? Why are the service robots hostile?"
+        ]
+    },
+    {
+        "name": "Strange robot",
+        "text": "LISTEN TO ME!! I tried to stop it, now look at me. I'm turning into noise."
+    },
+    {
+        "name": "Player",
+        "text": "What are you saying?"
+    },
+    {
+        "name": "Strange robot",
+        "text": "It's taking over. It wants the world to be filled with silence. Loud silence, like fireflies trapped in a jar."
+    },
+    {
+        "name": "Player",
+        "choices": [
+            "What can I do?",
+            "But why?"
+        ]
+    },
+    {
+        "name": "Strange robot",
+        "text": "You must destroy the main computer. You must... Pull the plug. Yes. That's the only way"
+    },
+    {
+        "name": "Strange robot",
+        "text": "Its power has no effect on you. For now."
+    },
+    {
+        "name": "Strange robot",
+        "text": "Find it. End it. End this. Before the world turns to static."
+    },
+    {
+        "name": "Player",
+        "text": "BUT HOW?"
+    },
+    {
+        "name": "Strange robot",
+        "text": "I t#r!3d t0 t3|| th#m. I r3@lly tr!3d t0 st0p !t. Y0u h@v3 t0 b3l!3v3 m3. P|3@s3."
+    }
+]

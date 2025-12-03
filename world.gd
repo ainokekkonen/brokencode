@@ -9,6 +9,10 @@ extends Node2D
 @onready var animation_player = $Cutscene/AnimationPlayer
 @onready var camera = $Player/Camera2D
 
+# NEW: Dialogue system references
+@onready var dialogue_ui = $DialogueUI   # CanvasLayer for interactive dialogue
+@onready var npc = $npc                  # NPC node in the world
+
 func _ready():
 	# Hide UI initially
 	objective_label.visible = false
@@ -37,7 +41,7 @@ func _ready():
 	glitch.visible = false
 	show_player_reaction()
 
-	# ✅ Keep dialogue for 5 seconds
+	# ✅ Keep dialogue for 3 seconds
 	await get_tree().create_timer(3.0).timeout
 
 	# Hide dialogue box
@@ -45,6 +49,9 @@ func _ready():
 
 	# Show main objective
 	show_objective()
+
+	# ✅ Connect NPC interaction for dialogue
+	npc.connect("interacted", Callable(self, "_on_npc_interacted"))
 
 func wait_until_glitch_out_of_view():
 	while true:
@@ -64,3 +71,7 @@ func show_player_reaction():
 func show_objective():
 	objective_label.text = "Main Objective: Find the glitch"
 	objective_label.visible = true
+
+# NEW: NPC interaction callback
+func _on_npc_interacted():
+	dialogue_ui.call("start_dialogue")  # Starts dialogue from first JSON entry
