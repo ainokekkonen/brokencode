@@ -37,9 +37,25 @@ theme_override_fonts/normal_font = ExtResource("2_je2oo")
 theme_override_font_sizes/normal_font_size = 32
 text = "chatting..."
 
-[node name="choice_container" type="VBoxContainer" parent="NinePatchRect"]
+[node name="VBoxContainer" type="VBoxContainer" parent="NinePatchRect"]
 layout_mode = 0
 offset_left = 64.0
 offset_top = 92.0
 offset_right = 1273.0
 offset_bottom = 189.0
+
+[node name="ContinueButton" type="Button" parent="NinePatchRect"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.69900006
+anchor_right = 0.5
+anchor_bottom = 0.69900006
+offset_left = -209.5
+offset_top = -16.54602
+offset_right = 208.5
+offset_bottom = 23.45398
+theme_override_colors/font_color = Color(0.24313726, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_je2oo")
+theme_override_font_sizes/font_size = 32
+text = "Continue"

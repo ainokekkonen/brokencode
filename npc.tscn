@@ -232,11 +232,10 @@ animations = [{
 "speed": 10.0
 }]
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ul7y6"]
-radius = 40.0
-height = 182.0
+[sub_resource type="CircleShape2D" id="CircleShape2D_bc6q4"]
+radius = 86.023254
 
-[node name="npc" type="CharacterBody2D"]
+[node name="NPC" type="CharacterBody2D" groups=["npc"]]
 script = ExtResource("1_bc6q4")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
@@ -245,6 +244,8 @@ animation = &"static"
 frame = 3
 frame_progress = 0.027179923
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(19, 10)
-shape = SubResource("CapsuleShape2D_ul7y6")
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(18, 11)
+shape = SubResource("CircleShape2D_bc6q4")
