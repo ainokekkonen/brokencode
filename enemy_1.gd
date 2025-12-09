@@ -1,6 +1,11 @@
 extends CharacterBody2D
 
 class_name Enemy1
+@onready var anim: AnimationPlayer = $AnimationPlayer
+@onready var animspr: AnimatedSprite2D = $AnimatedSprite2D 
+
+const ENEMY_HURT_SPRITE := "damage"  # AnimatedSprite2D / SpriteFrames
+const ENEMY_HURT_AP     := "hurt"    # AnimationPlayer
 
 const speed = 80
 var is_enemy_chase: bool = false
@@ -13,6 +18,7 @@ var dead: bool = false
 var taking_damage: bool = false
 var damage_to_deal = 20
 var is_dealing_damage: bool = false
+var is_hurt: bool = false
 
 var dir: Vector2
 const gravity = 900
@@ -31,16 +37,15 @@ var just_landed: bool = false
 var was_on_floor: bool = false
 
 func _ready():
-	$AnimatedSprite2D.animation_finished.connect(_on_anim_finished)
+	$AnimatedSprite2D.animation_finished.connect(_on_AnimatedSprite2D_animation_finished)
 
 func _process(delta):
 	if !is_on_floor():
 		velocity.y += gravity * delta
 		velocity.x = 0
 	
-	
 	move(delta)
-	handle_animation()
+	
 	move_and_slide()
 
 func move(delta):
@@ -127,9 +132,26 @@ func choose(array):
 func take_damage(damage):
 	health -= damage
 	taking_damage = true
+	
+	$AnimatedSprite2D.play(ENEMY_HURT_SPRITE)
+	anim.play(ENEMY_HURT_AP)
+	
 	if health <= health_min:
 		health = health_min
 		dead = true
+
+
+func _on_AnimatedSprite2D_animation_finished() -> void:
+	if $AnimatedSprite2D.animation == ENEMY_HURT_SPRITE:
+		taking_damage = false
+
+
+func start_hurt() -> void:
+	is_hurt = true
+
+func end_hurt_state() -> void:
+	is_hurt = false
+
 
 func _on_detection_area_body_entered(body):
 	print("DetectionArea entered by:", body.name)

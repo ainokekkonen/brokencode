@@ -1,4 +1,4 @@
-[gd_scene load_steps=48 format=3 uid="uid://disrshloy387v"]
+[gd_scene load_steps=51 format=3 uid="uid://disrshloy387v"]
 
 [ext_resource type="Script" uid="uid://o5apopds1vej" path="res://enemy_1.gd" id="1_3u0vs"]
 [ext_resource type="Texture2D" uid="uid://dmaj2hlc1o2ji" path="res://vihu1/sprite1-ATTACK.png" id="1_sa1y5"]
@@ -311,6 +311,36 @@ radius = 26.019224
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3u0vs"]
 size = Vector2(774, 167)
 
+[sub_resource type="Animation" id="Animation_3u0vs"]
+resource_name = "hurt"
+length = 0.3
+tracks/0/type = "method"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.3),
+"transitions": PackedFloat32Array(1, 1),
+"values": [{
+"args": [],
+"method": &"start_hurt"
+}, {
+"args": [],
+"method": &"end_hurt_state"
+}]
+}
+
+[sub_resource type="Animation" id="Animation_q5scw"]
+length = 0.001
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_1piqj"]
+_data = {
+&"RESET": SubResource("Animation_q5scw"),
+&"hurt": SubResource("Animation_3u0vs")
+}
+
 [node name="Enemy1" type="CharacterBody2D"]
 collision_layer = 2
 script = ExtResource("1_3u0vs")
@@ -318,9 +348,7 @@ script = ExtResource("1_3u0vs")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 scale = Vector2(2, 2)
 sprite_frames = SubResource("SpriteFrames_k1cod")
-animation = &"JumpStart"
-frame = 2
-frame_progress = 1.0
+animation = &"Damage"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 visible = false
@@ -347,6 +375,11 @@ shape = SubResource("RectangleShape2D_3u0vs")
 
 [node name="RayCast2D" type="RayCast2D" parent="."]
 target_position = Vector2(42, 7)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_1piqj")
+}
 
 [connection signal="timeout" from="DirectionTimer" to="." method="_on_direction_timer_timeout"]
 [connection signal="area_entered" from="hitbox" to="." method="_on_hitbox_area_entered"]
