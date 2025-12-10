@@ -1,4 +1,4 @@
-[gd_scene load_steps=51 format=3 uid="uid://disrshloy387v"]
+[gd_scene load_steps=52 format=3 uid="uid://disrshloy387v"]
 
 [ext_resource type="Script" uid="uid://o5apopds1vej" path="res://enemy_1.gd" id="1_3u0vs"]
 [ext_resource type="Texture2D" uid="uid://dmaj2hlc1o2ji" path="res://vihu1/sprite1-ATTACK.png" id="1_sa1y5"]
@@ -311,6 +311,9 @@ radius = 26.019224
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3u0vs"]
 size = Vector2(774, 167)
 
+[sub_resource type="Animation" id="Animation_q5scw"]
+length = 0.001
+
 [sub_resource type="Animation" id="Animation_3u0vs"]
 resource_name = "hurt"
 length = 0.3
@@ -332,14 +335,14 @@ tracks/0/keys = {
 }]
 }
 
-[sub_resource type="Animation" id="Animation_q5scw"]
-length = 0.001
-
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_1piqj"]
 _data = {
 &"RESET": SubResource("Animation_q5scw"),
 &"hurt": SubResource("Animation_3u0vs")
 }
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_q5scw"]
+size = Vector2(104, 95)
 
 [node name="Enemy1" type="CharacterBody2D"]
 collision_layer = 2
@@ -381,7 +384,14 @@ libraries = {
 &"": SubResource("AnimationLibrary_1piqj")
 }
 
+[node name="AttackHitbox" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackHitbox"]
+position = Vector2(32, -14.5)
+shape = SubResource("RectangleShape2D_q5scw")
+
 [connection signal="timeout" from="DirectionTimer" to="." method="_on_direction_timer_timeout"]
 [connection signal="area_entered" from="hitbox" to="." method="_on_hitbox_area_entered"]
 [connection signal="body_entered" from="DetectionArea" to="." method="_on_detection_area_body_entered"]
 [connection signal="body_exited" from="DetectionArea" to="." method="_on_detection_area_body_exited"]
+[connection signal="area_entered" from="AttackHitbox" to="." method="_on_attack_hitbox_area_entered"]
