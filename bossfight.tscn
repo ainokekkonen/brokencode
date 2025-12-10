@@ -1,29 +1,71 @@
-[gd_scene load_steps=4 format=3 uid="uid://dijr16htrbei1"]
+[gd_scene load_steps=7 format=3 uid="uid://dijr16htrbei1"]
 
-[ext_resource type="PackedScene" uid="uid://fcoidw8ov78i" path="res://screensBG.tscn" id="1_qy0bb"]
+[ext_resource type="Texture2D" uid="uid://cuksabkj064y4" path="res://aseprite/backgroound.png" id="1_vu5y6"]
 [ext_resource type="PackedScene" uid="uid://xt8g34iilisr" path="res://pause_menu.tscn" id="2_2ne6p"]
+[ext_resource type="PackedScene" uid="uid://5lpw2byj2w0e" path="res://bossrobot.tscn" id="3_qy0bb"]
+[ext_resource type="PackedScene" uid="uid://byjfkpmkypwvg" path="res://player/player.tscn" id="4_vu5y6"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_okq8k"]
-size = Vector2(4682, 318)
+size = Vector2(14201, 318)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vu5y6"]
+size = Vector2(16, 1259)
 
 [node name="BossFight" type="Node2D"]
 
-[node name="ParallaxBackground" parent="." instance=ExtResource("1_qy0bb")]
-
 [node name="GroundCollision" type="StaticBody2D" parent="."]
+position = Vector2(107, 1)
+collision_layer = 255
+collision_mask = 255
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="GroundCollision"]
-position = Vector2(933, 1209)
+position = Vector2(101.5, 1209)
 shape = SubResource("RectangleShape2D_okq8k")
 debug_color = Color(0.9135588, 9.2026e-05, 0.72111785, 0.41960785)
 
-[node name="PauseMenu" parent="." instance=ExtResource("2_2ne6p")]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = 866.0
-offset_top = 480.0
-offset_right = 866.0
-offset_bottom = 480.0
+[node name="TextureRect" type="TextureRect" parent="GroundCollision"]
+offset_left = -107.0
+offset_top = -1.0
+offset_right = 1798.0
+offset_bottom = 1078.0
+texture = ExtResource("1_vu5y6")
+
+[node name="TextureRect" type="TextureRect" parent="GroundCollision/TextureRect"]
+layout_mode = 0
+offset_left = 1905.0
+offset_right = 3810.0
+offset_bottom = 1079.0
+texture = ExtResource("1_vu5y6")
+
+[node name="Player" parent="." instance=ExtResource("4_vu5y6")]
+position = Vector2(37, 930)
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position = Vector2(-14, -7)
+limit_left = 0
+limit_top = -9999998
+limit_right = 4001
+limit_bottom = 1077
+position_smoothing_speed = 6.0
+
+[node name="BossRobot" parent="." instance=ExtResource("3_qy0bb")]
+position = Vector2(1414, 908)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="PauseMenu" parent="CanvasLayer" instance=ExtResource("2_2ne6p")]
+visible = false
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+collision_layer = 255
+collision_mask = 255
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+position = Vector2(-2, 619.5)
+shape = SubResource("RectangleShape2D_vu5y6")
+
+[node name="CanvasLayer2" type="CanvasLayer" parent="StaticBody2D/CollisionShape2D"]

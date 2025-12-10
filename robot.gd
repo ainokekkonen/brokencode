@@ -1,176 +1,195 @@
 
 extends CharacterBody2D
 
-# --- Movement & combat config ---
-const SPEED := 400.0
-const JUMP_VELOCITY := -600.0
-const MAX_JUMPS := 2
-
-# Animation names (only AnimatedSprite2D for now)
-const ATTACK_SPRITE_ANIM := "attack"
-
-@export var attack_cooldown: float = 0.30
-@export var attack_damage: int = 20
-@export var max_health: int = 100
-
-# Nodes
-@onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
+# --- Nodes ---
+@onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 @onready var hitbox: Area2D = $Hitbox1
-@onready var hurtbox: Area2D = $Hurtbox   # <-- Add this Area2D under Player
+@onready var hurtbox: Area2D = $Hurtbox
+@onready var detection: Area2D = $DetectionZone
 
-# State
-var is_attacking := false
-var can_attack := true
-var jump_count := 0
-var health := 0
+# --- Player reference (either via group "player" or set player_path) ---
+@export var player_path: NodePath
+var player: Node2D = null
 
-signal health_changed(new_health)
+# --- Movement (no jumping) ---
+@export var gravity: float = 980.0
+@export var move_speed: float = 140.0
+
+# --- The ONLY range you set in the editor is DetectionZone's CollisionShape ---
+# When the player is INSIDE DetectionZone -> boss follows and may attack.
+# To avoid swinging from far away, we use a SMALL "close distance" gate (in pixels).
+@export var close_distance: float = 32.0  # must be very near to start the attack
+
+# --- Attack (two swings) ---
+@export var attack_cooldown: float = 1.0
+@export var attack_damage: int = 20
+@export var first_swing_active: float = 0.15
+@export var gap_between_swings: float = 0.30
+@export var second_swing_active: float = 0.15
+
+# --- State ---
+var player_in_zone: bool = false
+var is_attacking: bool = false
+var can_attack: bool = true
 
 func _ready() -> void:
-	health = max_health
-	emit_signal("health_changed", health)
+	set_process_input(false)
+	set_process_unhandled_input(false)
 
-	# Hitbox starts OFF
-	hitbox.monitoring = false
+	# Areas
+	hitbox.monitoring = false        # ON only during swing
+	hurtbox.monitoring = true
+	detection.monitoring = true
+
+	# Signals (connect if not already wired in the editor)
+	if not detection.is_connected("area_entered", Callable(self, "_on_detection_enter")):
+		detection.area_entered.connect(_on_detection_enter)
+	if not detection.is_connected("area_exited", Callable(self, "_on_detection_exit")):
+		detection.area_exited.connect(_on_detection_exit)
+
 	if not hitbox.is_connected("area_entered", Callable(self, "_on_hitbox_area_entered")):
 		hitbox.area_entered.connect(_on_hitbox_area_entered)
-
-	# Hurtbox should be ON to receive enemy hits
-	hurtbox.monitoring = true
 	if not hurtbox.is_connected("area_entered", Callable(self, "_on_hurtbox_area_entered")):
 		hurtbox.area_entered.connect(_on_hurtbox_area_entered)
 
-func _physics_process(delta: float) -> void:
-	# Gravity
-	if not is_on_floor():
-		velocity += get_gravity() * delta
+	_resolve_player()
 
-	# Reset jumps when grounded
-	if is_on_floor():
-		jump_count = 0
-
-	# Jump / double jump
-	if Input.is_action_just_pressed("jump") and jump_count < MAX_JUMPS:
-		velocity.y = JUMP_VELOCITY
-		jump_count += 1
-
-	# Horizontal movement
-	var direction := Input.get_axis("move_left", "move_right")
-
-	# Face direction
-	if direction > 0.0:
-		animated_sprite_2d.flip_h = false
-	elif direction < 0.0:
-		animated_sprite_2d.flip_h = true
-
-	# Movement while attacking is locked (optional)
-	if is_attacking:
-		velocity.x = 0.0
+	# Start idle/walk (make sure your sprite is NOT set to auto-play "attack")
+	if anim_has("idle"):
+		anim.play("idle")
 	else:
-		if direction != 0.0:
-			velocity.x = direction * SPEED
-		else:
-			velocity.x = move_toward(velocity.x, 0.0, SPEED)
+		anim.play("walk")
 
+func _physics_process(delta: float) -> void:
+	# Keep grounded; never jump
+	if not is_on_floor():
+		velocity.y += gravity * delta
+
+	if player == null:
+		_resolve_player()
+
+	var vx: float = 0.0
+
+	if player_in_zone and player != null:
+		# Face player
+		anim.flip_h = (player.global_position.x < global_position.x)
+
+		var dx: float = player.global_position.x - global_position.x
+		var dist_x: float = abs(dx)
+
+		if not is_attacking:
+			if dist_x > close_distance:
+				# Follow horizontally until we're close enough
+				vx = sign(dx) * move_speed
+			else:
+				# Close enough: stop and attack (only if off cooldown)
+				vx = 0.0
+				if can_attack:
+					attempt_attack()
+		else:
+			# Lock movement during the whole attack sequence
+			vx = 0.0
+	else:
+		# Player not in Detection Zone -> stand idle
+		vx = 0.0
+
+	velocity.x = vx
 	move_and_slide()
 
-	# Simple sprite animations
+	# Drive non-attack animations
 	if not is_attacking:
-		if is_on_floor():
-			animated_sprite_2d.play("idle" if direction == 0.0 else "run")
+		if abs(velocity.x) < 1.0:
+			if anim_has("idle"): anim.play("idle")
+			# else keep last animation to avoid spam
 		else:
-			animated_sprite_2d.play("jump" if velocity.y < 0.0 else "fall")
+			anim.play("walk")
 
-func _process(_delta: float) -> void:
-	if Input.is_action_just_pressed("attack"):
-		attempt_attack()
+# --- Detection Zone handlers ---
+func _on_detection_enter(area: Area2D) -> void:
+	var owner := area.get_parent()
+	# Expect the player's Hurtbox Area to be a child of the player
+	if owner and owner.is_in_group("player"):
+		player_in_zone = true
 
-# --- Attack (no AnimationPlayer needed) ---
+func _on_detection_exit(area: Area2D) -> void:
+	var owner := area.get_parent()
+	if owner and owner.is_in_group("player"):
+		player_in_zone = false
+
+# --- Two-swing attack sequence ---
 func attempt_attack() -> void:
-	if not can_attack or is_attacking:
+	if player == null or not can_attack or is_attacking or not player_in_zone:
+		return
+
+	# Check "close enough" RIGHT NOW (horizontal proximity gate)
+	var dist_x: float = abs(player.global_position.x - global_position.x)
+	if dist_x > close_distance:
 		return
 
 	can_attack = false
 	is_attacking = true
 
-	animated_sprite_2d.play(ATTACK_SPRITE_ANIM)
+	anim.play("attack")  # animation with both swings
 
-	# Turn hitbox ON briefly
-	enable_hitbox_for(0.15)
+	# Swing 1
+	await enable_hitbox_for(first_swing_active)
 
-	# After cooldown, allow next attack
+	# Gap
+	await get_tree().create_timer(gap_between_swings).timeout
+
+	# Swing 2
+	await enable_hitbox_for(second_swing_active)
+
+	# Cooldown
 	await get_tree().create_timer(attack_cooldown).timeout
-	can_attack = true
 	is_attacking = false
+	can_attack = true
 
 func enable_hitbox_for(duration: float) -> void:
-	# Optional: flip hitbox position if your Hitbox1 is offset to one side
-	# var local := $Hitbox1.position
-	# $Hitbox1.position.x = abs(local.x) * (animated_sprite_2d.flip_h ? -1 : 1)
+	# Only enable hitbox if the player is still in zone and still close
+	if player == null or not player_in_zone:
+		await get_tree().create_timer(duration).timeout
+		return
+
+	var dist_x: float = abs(player.global_position.x - global_position.x)
+	if dist_x > close_distance:
+		await get_tree().create_timer(duration).timeout
+		return
 
 	hitbox.monitoring = true
 	await get_tree().create_timer(duration).timeout
 	hitbox.monitoring = false
 
-# --- Deal damage to enemies when player hitbox overlaps their Hurtbox ---
+# --- Combat overlaps ---
 func _on_hitbox_area_entered(area: Area2D) -> void:
-	var enemy := area.get_owner()
-	if enemy and enemy.is_in_group("enemies") and enemy.has_method("take_damage"):
-		var dir: Vector2 = (enemy.global_position - global_position).normalized()
-		enemy.take_damage(attack_damage, dir * 120.0)
-		# Optional: micro-hitstop for feel
-		# await micro_hitstop(0.05)
+	var target := area.get_parent()
+	if target and target.is_in_group("player") and target.has_method("take_damage"):
+		var dir_vec: Vector2 = (target.global_position - global_position).normalized()
+		target.take_damage(attack_damage, dir_vec * 180.0)
 
-# --- Receive damage when enemy Hitbox overlaps player Hurtbox ---
 func _on_hurtbox_area_entered(area: Area2D) -> void:
-	var enemy := area.get_owner()
-	var dmg := 10
-	if enemy and enemy.has_method("get_attack_damage"):
-		dmg = int(enemy.get_attack_damage())
-	take_damage(dmg)
+	var attacker := area.get_parent()
+	var dmg: int = 10
+	if attacker and attacker.has_method("get_attack_damage"):
+		dmg = int(attacker.get_attack_damage())
+	_take_damage(dmg)
 
-# --- Health handling ---
-func take_damage(amount: int) -> void:
-	health = clamp(health - amount, 0, max_health)
-	emit_signal("health_changed", health)
-	if health == 0:
-		_on_player_defeated()
+func _take_damage(amount: int) -> void:
+	if anim_has("PowerDown"):               # matches your animation name/case
+		anim.play("PowerDown")
+	else:
+		anim.play("attack")                  # simple flinch fallback
 
-func heal(amount: int) -> void:
-	health = clamp(health + amount, 0, max_health)
-	emit_signal("health_changed", health)
+# --- Helpers ---
+func anim_has(name: String) -> bool:
+	return anim.sprite_frames != null and anim.sprite_frames.has_animation(name)
 
-func _on_player_defeated() -> void:
-	is_attacking = false
-	velocity = Vector2.ZERO
-	animated_sprite_2d.play("idle")
-	set_physics_process(false)
-	set_process(false)
-
-# Exposed helpers enemies can call
-func get_attack_damage() -> int:
-	return attack_damage
-
-func apply_knockback(force: Vector2) -> void:
-	velocity += force
-
-# Optional impact feel
-func micro_hitstop(duration := 0.05) -> void:
-	Engine.time_scale = 0.25
-	await get_tree().create_timer(duration, true, false, true).timeout
-	Engine.time_scale = 1.0
-
-# Debug keys (optional)
-func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("damage"):
-		take_damage(20)
-	if event.is_action_pressed("heal"):
-		heal(20)
-
-
-func _on_hurt_box_area_entered(area: Area2D) -> void:
-	pass # Replace with function body.
-
-
-func _on_hit_box_area_entered(area: Area2D) -> void:
-	pass # Replace with function body.
+func _resolve_player() -> void:
+	if player_path != NodePath():
+		var n := get_node_or_null(player_path)
+		if n:
+			player = n as Node2D
+			return
+	var candidates := get_tree().get_nodes_in_group("player")
+	if candidates.size() > 0:
+		player = candidates[0] as Node2D

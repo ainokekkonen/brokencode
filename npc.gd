@@ -9,27 +9,29 @@ var is_dead: bool = false
 var is_hurt: bool = false
 
 signal interacted
-# Optional convenience signal (not required by your current World script)
 signal talk_to(npc: Node)
+
+# Let the world know when the NPC has finished dying and is now static
+signal became_static
 
 func _ready() -> void:
 	# Make the Area2D clickable via its CollisionShape2D
 	if interact_area:
 		interact_area.input_pickable = true
-		if not interact_area.input_event.is_connected(_on_area_input_event):
-			interact_area.input_event.connect(_on_area_input_event)
+		if not interact_area.input_event.is_connected(Callable(self, "_on_area_input_event")):
+			interact_area.input_event.connect(Callable(self, "_on_area_input_event"))
 	_play_idle()
 
 func _on_area_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
 	if is_dead:
 		return
-	if event is InputEventMouseButton and (event as InputEventMouseButton).pressed \
-	and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
-		interacted.emit()
-		# Also emit talk_to(self) if you want to use it later
-		talk_to.emit(self)
-		# Stop the click from propagating to other listeners (optional)
-		get_viewport().set_input_as_handled()
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+			interacted.emit()
+			talk_to.emit(self)
+			# Stop the click from propagating to other listeners (optional)
+			get_viewport().set_input_as_handled()
 
 # ------------------ Anim helpers ------------------
 
@@ -53,7 +55,6 @@ func play_hurt_animation() -> void:
 	is_hurt = true
 	if _has_animation("hurt"):
 		anim.play("hurt")
-		# If you want automatic return to idle after hurt finishes:
 		await anim.animation_finished
 	is_hurt = false
 	_play_idle()
@@ -88,3 +89,6 @@ func play_death_then_static() -> void:
 	else:
 		# Fallback: freeze on last frame (or stop)
 		anim.stop()
+
+	# ✅ Inform listeners the NPC is now static (World listens to this to arm the scene change)
+	became_static.emit()

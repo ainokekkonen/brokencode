@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://p7yuv3lfp5o2"]
+
+[ext_resource type="PackedScene" uid="uid://fcoidw8ov78i" path="res://screensBG.tscn" id="1_ksuqd"]
+[ext_resource type="Script" uid="uid://c3t5ovq5moljy" path="res://parallax_background.gd" id="2_si5dj"]
+
+[node name="ParallaxBackground" instance=ExtResource("1_ksuqd")]
+script = ExtResource("2_si5dj")
+
+[node name="Screens" parent="." index="0"]
+motion_scale = Vector2(1, 1)
+
+[node name="Tiles" parent="." index="1"]
+motion_scale = Vector2(1.5, 1.5)
+
+[node name="Wires" parent="." index="2"]
+motion_scale = Vector2(2, 2)

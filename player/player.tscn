@@ -653,6 +653,7 @@ height = 76.0
 
 [node name="Player" type="CharacterBody2D"]
 position = Vector2(2, -5)
+collision_layer = 3
 collision_mask = 2
 script = ExtResource("1_rkbax")
 
@@ -678,12 +679,12 @@ collision_mask = 4
 position = Vector2(54, 15)
 shape = SubResource("CircleShape2D_2ieo8")
 
-[node name="HurtBox" type="Area2D" parent="."]
+[node name="Hurtbox" type="Area2D" parent="."]
 collision_layer = 32
 collision_mask = 8
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtBox"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
 position = Vector2(36, 15)
 shape = SubResource("CapsuleShape2D_boad6")
 
-[connection signal="area_entered" from="HurtBox" to="." method="_on_hurt_box_area_entered"]
+[connection signal="area_entered" from="Hurtbox" to="." method="_on_hurt_box_area_entered"]

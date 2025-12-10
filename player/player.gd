@@ -7,8 +7,8 @@ const JUMP_VELOCITY := -600.0
 const MAX_JUMPS := 2
 
 # Animation names
-const ATTACK_ANIM := "attack1"            # AnimationPlayer track name
-const ATTACK_SPRITE_ANIM := "attack"      # AnimatedSprite2D animation name
+const ATTACK_ANIM := "attack1"
+const ATTACK_SPRITE_ANIM := "attack"
 
 # Exported so designers can tweak in the editor
 @export var attack_cooldown: float = 0.30
@@ -20,7 +20,7 @@ const ATTACK_SPRITE_ANIM := "attack"      # AnimatedSprite2D animation name
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 @onready var anim: AnimationPlayer = $AnimationPlayer
 @onready var hitbox: Area2D = $Hitbox1
-@onready var hurtbox: Area2D = $Hurtbox  # <-- make sure this exists in the scene
+@onready var hurtbox: Area2D = $Hurtbox
 
 # State
 var is_attacking: bool = false
@@ -28,22 +28,20 @@ var can_attack: bool = true
 var jump_count: int = 0
 var health: int = 0
 
+# NEW: lock to block attacks (e.g., while dialogue is open)
+@export var attack_locked: bool = false
+
 # Signals
 signal health_changed(new_health)
 
 func _ready() -> void:
-	# Initialize health
 	health = max_health
 	emit_signal("health_changed", health)
 
-	# Hitbox should be off by default
 	hitbox.monitoring = false
-	# Connect hitbox to damage enemies (when it overlaps enemy Hurtbox)
-	# Use area_entered because enemies typically expose Hurtbox as Area2D
 	if not hitbox.is_connected("area_entered", Callable(self, "_on_hitbox_area_entered")):
 		hitbox.area_entered.connect(_on_hitbox_area_entered)
 
-	# Hurtbox should constantly monitor so enemies can hit the player
 	hurtbox.monitoring = true
 	if not hurtbox.is_connected("area_entered", Callable(self, "_on_hurtbox_area_entered")):
 		hurtbox.area_entered.connect(_on_hurtbox_area_entered)
@@ -91,66 +89,69 @@ func _physics_process(delta: float) -> void:
 				animated_sprite_2d.play("run")
 		else:
 			if velocity.y < 0.0:
-				animated_sprite_2d.play("jump")   # Ascending
+				animated_sprite_2d.play("jump")
 			else:
-				animated_sprite_2d.play("fall")   # Descending
+				animated_sprite_2d.play("fall")
 
 func _process(_delta: float) -> void:
-	if Input.is_action_just_pressed("attack"):
+	# Block attack input while locked (e.g., during dialogue)
+	if not attack_locked and Input.is_action_just_pressed("attack"):
 		attempt_attack()
 
 # --- Attack flow ---
 func attempt_attack() -> void:
-	if not can_attack or is_attacking:
+	# Respect the lock and other gates
+	if attack_locked or not can_attack or is_attacking:
 		return
 
 	can_attack = false
 	is_attacking = true
 
-	# Visual sprite animation
 	animated_sprite_2d.play(ATTACK_SPRITE_ANIM)
 
-	# Play the AnimationPlayer track if present
 	if anim.has_animation(ATTACK_ANIM):
 		anim.play(ATTACK_ANIM)
 	else:
 		push_error("Animation '%s' not found on %s" % [ATTACK_ANIM, anim.name])
-		# Fail-safe: end attack state so controls don’t lock
 		end_attack_state()
 
-	# Cooldown gate
 	await get_tree().create_timer(attack_cooldown).timeout
 	can_attack = true
 
-# --- Called from AnimationPlayer via Call Method Track ---
-# Put this at the frame where the hit should connect.
+# Called from AnimationPlayer
 func hitbox_enable() -> void:
 	hitbox.monitoring = true
-	# Optional: flip hitbox position to face direction if needed
-	# var local_pos := $Hitbox1.position
-	# $Hitbox1.position.x = abs(local_pos.x) * (animated_sprite_2d.flip_h ? -1 : 1)
 
-# Put this a few frames after the hit connects.
 func hitbox_disable() -> void:
 	hitbox.monitoring = false
 
-# When the attack animation ends, call this (AnimationPlayer call at the end)
 func end_attack_state() -> void:
 	is_attacking = false
 
+# --- NEW: external API to lock/unlock attacks (used by World/DialogueUI) ---
+func lock_attacks(lock: bool) -> void:
+	attack_locked = lock
+	if lock and is_attacking:
+		# Cancel any ongoing attack immediately
+		hitbox_disable()
+		is_attacking = false
+		if anim and anim.is_playing():
+			anim.stop()
+		# Snap to a safe state
+		if is_on_floor():
+			animated_sprite_2d.play("idle")
+		else:
+			animated_sprite_2d.play("fall")
+
 # --- Damage application to enemies ---
 func _on_hitbox_area_entered(area: Area2D) -> void:
-	# Expect enemy Hurtbox Area2D
 	var enemy := area.get_owner()
 	if enemy and enemy.is_in_group("enemies") and enemy.has_method("take_damage"):
 		var dir: Vector2 = (enemy.global_position - global_position).normalized()
 		enemy.take_damage(attack_damage, dir * 120.0)
-		# Optional hitstop for impact feel:
-		# await micro_hitstop(0.05)
 
 # --- Taking damage from enemy hitboxes ---
 func _on_hurtbox_area_entered(area: Area2D) -> void:
-	# Expect enemy Hitbox Area2D
 	var enemy := area.get_owner()
 	var dmg := 10
 	if enemy and enemy.has_method("get_attack_damage"):
@@ -161,7 +162,6 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 func take_damage(amount: int) -> void:
 	health = clamp(health - amount, 0, max_health)
 	emit_signal("health_changed", health)
-	# Optional: brief flash or invincibility window
 	if health == 0:
 		_on_player_defeated()
 
@@ -170,25 +170,20 @@ func heal(amount: int) -> void:
 	emit_signal("health_changed", health)
 
 func _on_player_defeated() -> void:
-	# TODO: death animation / respawn / game over
-	# For now, stop input & play a fall/idle
 	is_attacking = false
 	velocity = Vector2.ZERO
 	animated_sprite_2d.play("idle")
 	set_physics_process(false)
 	set_process(false)
 
-# Optional: small hitstop to improve impact
 func micro_hitstop(duration := 0.05) -> void:
 	Engine.time_scale = 0.25
 	await get_tree().create_timer(duration, true, false, true).timeout
 	Engine.time_scale = 1.0
 
-# Enemies may call this to read player attack damage
 func get_attack_damage() -> int:
 	return attack_damage
 
-# If enemies apply knockback to player:
 func apply_knockback(force: Vector2) -> void:
 	velocity += force
 
@@ -199,6 +194,5 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("heal"):
 		heal(20)
 
-
 func _on_hurt_box_area_entered(area: Area2D) -> void:
-	pass # Replace with function body.
+	pass

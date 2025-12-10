@@ -2,6 +2,9 @@
 # DialogueUI.gd (Godot 4)
 extends CanvasLayer
 
+signal dialogue_started
+signal dialogue_finished
+
 @export var dialogue_json_path: String = "res://Dialogue/json/npcdialogue.json"
 @export var npc_path: NodePath
 
@@ -13,7 +16,7 @@ extends CanvasLayer
 @onready var continue_button: Button = get_node_or_null("NinePatchRect/ContinueButton") as Button
 
 # NPC reference (World sets this before starting dialogue)
-@onready var npc: Node = null
+var npc: Node = null   # not @onready so World can assign any time
 
 # Dialogue state
 var dialogue_data: Array[Dictionary] = []
@@ -92,6 +95,10 @@ func _ready() -> void:
 	# Validate essential nodes; log but don't crash
 	if nine_patch == null:
 		push_error("DialogueUI: NinePatchRect not found under DialogueUI.")
+	else:
+		# Stop clicks from falling through the UI to the world/NPC
+		nine_patch.mouse_filter = Control.MOUSE_FILTER_STOP
+
 	if name_label == null:
 		push_error("DialogueUI: name_label not found under NinePatchRect.")
 	if chat_label == null:
@@ -104,8 +111,8 @@ func _ready() -> void:
 		continue_button.text = "Continue"
 		continue_button.visible = false
 		continue_button.disabled = true
-		if not continue_button.pressed.is_connected(_on_continue_pressed):
-			continue_button.pressed.connect(_on_continue_pressed)
+		if not continue_button.pressed.is_connected(Callable(self, "_on_continue_pressed")):
+			continue_button.pressed.connect(Callable(self, "_on_continue_pressed"))
 
 	# Load and normalize dialogue data
 	var raw: Array = _load_dialogue(dialogue_json_path)
@@ -132,6 +139,7 @@ func start_dialogue(npc_sender: Node = null) -> void:
 	current_index = 0
 	hurt_played = false
 	visible = true
+	emit_signal("dialogue_started")
 	_render_current()
 
 func _render_current() -> void:
@@ -185,7 +193,7 @@ func _add_choice_button(text: String) -> void:
 	var btn: Button = Button.new()
 	btn.text = text
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	btn.pressed.connect(_on_choice_pressed)
+	btn.pressed.connect(Callable(self, "_on_choice_pressed"))
 	choice_container.add_child(btn)
 
 func _on_choice_pressed() -> void:
@@ -216,8 +224,13 @@ func _on_continue_pressed() -> void:
 	_render_current()
 
 func _end_dialogue() -> void:
+	# Notify world first so it can unlock attacks immediately
+	emit_signal("dialogue_finished")
+
+	# Trigger NPC death -> static flow; World listens for npc.became_static
 	if npc and npc.has_method("play_death_then_static"):
 		npc.call("play_death_then_static")
+
 	visible = false
 
 # Allow clicking / Space / Enter to skip the typewriter reveal
@@ -225,7 +238,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _is_typing:
 		if event is InputEventMouseButton and event.pressed and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
 			_skip_requested = true
+			get_viewport().set_input_as_handled()  # avoid other systems reacting
 		elif event is InputEventKey and event.pressed:
 			var key := (event as InputEventKey).keycode
 			if key == KEY_SPACE or key == KEY_ENTER:
 				_skip_requested = true
+				get_viewport().set_input_as_handled()
