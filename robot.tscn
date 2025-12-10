@@ -1,0 +1,53 @@
+[gd_scene load_steps=6 format=3 uid="uid://crekf68x6io1h"]
+
+[ext_resource type="Script" uid="uid://dgk4fc0qncvrh" path="res://robot.gd" id="1_dfm56"]
+[ext_resource type="Texture2D" uid="uid://b3fhbqugv5wse" path="res://aseprite/ASEPRITE/boss/bosss.png" id="2_yhfw1"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ru5oq"]
+radius = 35.0
+height = 206.0
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_7xofo"]
+radius = 41.0
+height = 136.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_yyxj1"]
+size = Vector2(141, 45)
+
+[node name="BossRobot" type="CharacterBody2D" groups=["enemies"]]
+collision_layer = 2
+script = ExtResource("1_dfm56")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(-22, 23.5)
+scale = Vector2(0.828125, 0.81640625)
+texture = ExtResource("2_yhfw1")
+
+[node name="BodyCollider" type="CollisionShape2D" parent="."]
+position = Vector2(-17, 26)
+shape = SubResource("CapsuleShape2D_ru5oq")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="HurtBox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 16
+
+[node name="HurtboxShape" type="CollisionShape2D" parent="HurtBox"]
+position = Vector2(-19, 63)
+shape = SubResource("CapsuleShape2D_7xofo")
+
+[node name="HitBox" type="Area2D" parent="."]
+collision_layer = 8
+collision_mask = 32
+
+[node name="HitboxShape" type="CollisionShape2D" parent="HitBox"]
+position = Vector2(-59, 13)
+shape = SubResource("RectangleShape2D_yyxj1")
+
+[node name="AttackCooldown" type="Timer" parent="."]
+
+[node name="ComboTimer" type="Timer" parent="."]
+
+[connection signal="area_entered" from="HurtBox" to="." method="_on_hurt_box_area_entered"]
+[connection signal="area_entered" from="HitBox" to="." method="_on_hit_box_area_entered"]

@@ -1,0 +1,29 @@
+[gd_scene load_steps=4 format=3 uid="uid://dijr16htrbei1"]
+
+[ext_resource type="PackedScene" uid="uid://fcoidw8ov78i" path="res://screensBG.tscn" id="1_qy0bb"]
+[ext_resource type="PackedScene" uid="uid://xt8g34iilisr" path="res://pause_menu.tscn" id="2_2ne6p"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_okq8k"]
+size = Vector2(4682, 318)
+
+[node name="BossFight" type="Node2D"]
+
+[node name="ParallaxBackground" parent="." instance=ExtResource("1_qy0bb")]
+
+[node name="GroundCollision" type="StaticBody2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="GroundCollision"]
+position = Vector2(933, 1209)
+shape = SubResource("RectangleShape2D_okq8k")
+debug_color = Color(0.9135588, 9.2026e-05, 0.72111785, 0.41960785)
+
+[node name="PauseMenu" parent="." instance=ExtResource("2_2ne6p")]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 866.0
+offset_top = 480.0
+offset_right = 866.0
+offset_bottom = 480.0

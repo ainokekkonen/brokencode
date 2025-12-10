@@ -1,4 +1,4 @@
-[gd_scene load_steps=92 format=3 uid="uid://byjfkpmkypwvg"]
+[gd_scene load_steps=93 format=3 uid="uid://byjfkpmkypwvg"]
 
 [ext_resource type="Script" uid="uid://doo43pkqffe4n" path="res://player/player.gd" id="1_rkbax"]
 [ext_resource type="Texture2D" uid="uid://drlldtw2cm343" path="res://aseprite/ASEPRITE/PLAYERAN/mcATTACK.png" id="2_yw30f"]
@@ -582,6 +582,21 @@ animations = [{
 radius = 28.0
 height = 76.0
 
+[sub_resource type="Animation" id="Animation_8t03j"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("AnimatedSprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
 [sub_resource type="Animation" id="Animation_boad6"]
 resource_name = "attack1"
 length = 0.89
@@ -621,21 +636,6 @@ resource_name = "attack2"
 [sub_resource type="Animation" id="Animation_hg6s5"]
 resource_name = "attack3"
 
-[sub_resource type="Animation" id="Animation_8t03j"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("AnimatedSprite2D:frame")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [0]
-}
-
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_8t03j"]
 _data = {
 &"RESET": SubResource("Animation_8t03j"),
@@ -647,8 +647,13 @@ _data = {
 [sub_resource type="CircleShape2D" id="CircleShape2D_2ieo8"]
 radius = 34.0
 
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_boad6"]
+radius = 22.0
+height = 76.0
+
 [node name="Player" type="CharacterBody2D"]
 position = Vector2(2, -5)
+collision_mask = 2
 script = ExtResource("1_rkbax")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
@@ -666,7 +671,19 @@ libraries = {
 }
 
 [node name="Hitbox1" type="Area2D" parent="."]
+collision_layer = 16
+collision_mask = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox1"]
 position = Vector2(54, 15)
 shape = SubResource("CircleShape2D_2ieo8")
+
+[node name="HurtBox" type="Area2D" parent="."]
+collision_layer = 32
+collision_mask = 8
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtBox"]
+position = Vector2(36, 15)
+shape = SubResource("CapsuleShape2D_boad6")
+
+[connection signal="area_entered" from="HurtBox" to="." method="_on_hurt_box_area_entered"]

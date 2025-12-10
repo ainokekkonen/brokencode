@@ -1,8 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://fcoidw8ov78i"]
+[gd_scene load_steps=2 format=3 uid="uid://fcoidw8ov78i"]
 
 [ext_resource type="Texture2D" uid="uid://buscvmcs6gped" path="res://aseprite/ASEPRITE/BGscreens/screensBG-Recovered.png" id="1_mnjya"]
-
-[sub_resource type="TileSet" id="TileSet_mnjya"]
 
 [node name="ParallaxBackground" type="ParallaxBackground"]
 
@@ -36,8 +34,3 @@ motion_mirroring = Vector2(1980, 0)
 texture = ExtResource("1_mnjya")
 region_enabled = true
 region_rect = Rect2(2.641, 2156.969, 1980, 1080)
-
-[node name="TileMap" type="TileMap" parent="."]
-position = Vector2(37.035, 552)
-tile_set = SubResource("TileSet_mnjya")
-format = 2
