@@ -1,4 +1,3 @@
-
 extends CharacterBody2D
 
 # --- Movement & combat config ---
@@ -12,14 +11,14 @@ const ATTACK_SPRITE_ANIM := "attack"
 
 # Exported so designers can tweak in the editor
 @export var attack_cooldown: float = 0.30
-@export var attack_damage: int = 20
+@export var attack_damage: int = 30
 @export var max_health: int = 100
 @export var move_speed: float = 160.0
 
 # Nodes
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 @onready var anim: AnimationPlayer = $AnimationPlayer
-@onready var hitbox: Area2D = $Hitbox1
+@onready var hitbox: Area2D = $Hitbox
 @onready var hurtbox: Area2D = $Hurtbox
 
 # State
@@ -37,6 +36,8 @@ signal health_changed(new_health)
 func _ready() -> void:
 	health = max_health
 	emit_signal("health_changed", health)
+	hitbox.add_to_group("PlayerAttack")
+	hurtbox.add_to_group("Player")
 
 	hitbox.monitoring = false
 	if not hitbox.is_connected("area_entered", Callable(self, "_on_hitbox_area_entered")):
@@ -114,7 +115,12 @@ func attempt_attack() -> void:
 	else:
 		push_error("Animation '%s' not found on %s" % [ATTACK_ANIM, anim.name])
 		end_attack_state()
-
+		return
+	
+	await get_tree().create_timer(0.2).timeout
+	hitbox.monitoring = false
+	is_attacking = false
+	
 	await get_tree().create_timer(attack_cooldown).timeout
 	can_attack = true
 
@@ -145,25 +151,37 @@ func lock_attacks(lock: bool) -> void:
 
 # --- Damage application to enemies ---
 func _on_hitbox_area_entered(area: Area2D) -> void:
+	print("player hitbox osui", area.name)
 	var enemy := area.get_owner()
 	if enemy and enemy.is_in_group("enemies") and enemy.has_method("take_damage"):
 		var dir: Vector2 = (enemy.global_position - global_position).normalized()
 		enemy.take_damage(attack_damage, dir * 120.0)
 
-# --- Taking damage from enemy hitboxes ---
-func _on_hurtbox_area_entered(area: Area2D) -> void:
-	var enemy := area.get_owner()
-	var dmg := 10
-	if enemy and enemy.has_method("get_attack_damage"):
-		dmg = int(enemy.get_attack_damage())
-	take_damage(dmg)
 
-# --- Health & utility ---
+# --- Damage animaatio ---
+var damage_recovery_time := 0.4
+var is_taking_damage: bool = false
+
 func take_damage(amount: int) -> void:
+	if health <= 0:
+		return
 	health = clamp(health - amount, 0, max_health)
 	emit_signal("health_changed", health)
 	if health == 0:
 		_on_player_defeated()
+		return
+	is_taking_damage = true
+	animated_sprite_2d.play("hurt")   # tee animaatio nimellä "damage"
+	anim.play("hurt")                 # jos AnimationPlayerissä on vastaava animaatio
+	# Pieni viive ennen paluuta normaaliin tilaan
+	await get_tree().create_timer(damage_recovery_time).timeout
+	is_taking_damage = false
+	# Palauta sopiva animaatio
+	if is_on_floor():
+		animated_sprite_2d.play("idle")
+	else:
+		animated_sprite_2d.play("fall")
+
 
 func heal(amount: int) -> void:
 	health = clamp(health + amount, 0, max_health)
@@ -172,7 +190,7 @@ func heal(amount: int) -> void:
 func _on_player_defeated() -> void:
 	is_attacking = false
 	velocity = Vector2.ZERO
-	animated_sprite_2d.play("idle")
+	animated_sprite_2d.play("death")
 	set_physics_process(false)
 	set_process(false)
 
@@ -189,10 +207,16 @@ func apply_knockback(force: Vector2) -> void:
 
 # Debug helpers
 func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("damage"):
+	if event.is_action_pressed("hurt"):
 		take_damage(20)
 	if event.is_action_pressed("heal"):
 		heal(20)
 
-func _on_hurt_box_area_entered(area: Area2D) -> void:
-	pass
+# --- Taking damage from enemy hitboxes ---
+func _on_hurtbox_area_entered(area: Area2D) -> void:
+	print("player hurtbox osui:", area.name)
+	var enemy := area.get_owner()
+	var dmg := 10
+	if enemy and enemy.has_method("get_attack_damage"):
+		dmg = int(enemy.get_attack_damage())
+	take_damage(dmg)

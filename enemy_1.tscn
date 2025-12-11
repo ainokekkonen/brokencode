@@ -306,7 +306,7 @@ animations = [{
 radius = 30.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_q5scw"]
-radius = 26.019224
+radius = 40.04997
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3u0vs"]
 size = Vector2(774, 167)
@@ -344,35 +344,34 @@ _data = {
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_q5scw"]
 size = Vector2(104, 95)
 
-[node name="Enemy1" type="CharacterBody2D"]
+[node name="Enemy1" type="CharacterBody2D" groups=["enemies"]]
 collision_layer = 2
 script = ExtResource("1_3u0vs")
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." groups=["enemies"]]
 scale = Vector2(2, 2)
 sprite_frames = SubResource("SpriteFrames_k1cod")
 animation = &"Damage"
+frame = 3
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-visible = false
 position = Vector2(0, -3)
 shape = SubResource("CircleShape2D_3u0vs")
 
 [node name="DirectionTimer" type="Timer" parent="."]
 autostart = true
 
-[node name="hitbox" type="Area2D" parent="."]
-visible = false
+[node name="Hurtbox" type="Area2D" parent="." groups=["EnemyHurtbox", "enemies"]]
+collision_layer = 8
+collision_mask = 2
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="hitbox"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
 position = Vector2(0, -4)
 shape = SubResource("CircleShape2D_q5scw")
 
-[node name="DetectionArea" type="Area2D" parent="." groups=["Player"]]
-visible = false
+[node name="DetectionArea" type="Area2D" parent="." groups=["enemies"]]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="DetectionArea"]
-visible = false
 position = Vector2(2, -52.5)
 shape = SubResource("RectangleShape2D_3u0vs")
 
@@ -384,14 +383,16 @@ libraries = {
 &"": SubResource("AnimationLibrary_1piqj")
 }
 
-[node name="AttackHitbox" type="Area2D" parent="."]
+[node name="AttackHitbox" type="Area2D" parent="." groups=["EnemyHurtbox", "enemies"]]
+collision_layer = 16
+collision_mask = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AttackHitbox"]
 position = Vector2(32, -14.5)
 shape = SubResource("RectangleShape2D_q5scw")
 
 [connection signal="timeout" from="DirectionTimer" to="." method="_on_direction_timer_timeout"]
-[connection signal="area_entered" from="hitbox" to="." method="_on_hitbox_area_entered"]
+[connection signal="area_entered" from="Hurtbox" to="." method="_on_hurtbox_area_entered"]
 [connection signal="body_entered" from="DetectionArea" to="." method="_on_detection_area_body_entered"]
 [connection signal="body_exited" from="DetectionArea" to="." method="_on_detection_area_body_exited"]
 [connection signal="area_entered" from="AttackHitbox" to="." method="_on_attack_hitbox_area_entered"]

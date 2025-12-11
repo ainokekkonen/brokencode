@@ -4,8 +4,6 @@ class_name Enemy1
 @onready var anim: AnimationPlayer = $AnimationPlayer
 @onready var anim_sprite: AnimatedSprite2D = $AnimatedSprite2D 
 
-const ENEMY_HURT_SPRITE := "damage"  # AnimatedSprite2D / SpriteFrames
-const ENEMY_HURT_AP     := "hurt"    # AnimationPlayer
 
 const speed = 80
 var is_enemy_chase: bool = false
@@ -16,7 +14,7 @@ var health_min = 0
 
 var dead: bool = false
 var taking_damage: bool = false
-var damage_to_deal = 20
+var damage_to_deal = 1
 var is_dealing_damage: bool = false
 var is_hurt: bool = false
 
@@ -37,14 +35,6 @@ var just_landed: bool = false
 var was_on_floor: bool = false
 
 
-func _process(delta):
-	if !is_on_floor():
-		velocity.y += gravity * delta
-		velocity.x = 0
-	
-	move(delta)
-	
-	move_and_slide()
 
 func move(delta):
 	if is_dealing_damage:
@@ -56,14 +46,17 @@ func move(delta):
 			velocity += dir * speed * delta
 			if velocity.x != 0:
 				dir.x = sign(player.position.x - position.x)
+			
+			if $RayCast2D.is_colliding() and is_on_floor():
+				velocity.y = jump_velocity
+				velocity.x = dir.x * speed
+				is_jumping = true
+				just_landed = false
+		
 		elif is_enemy_chase and !taking_damage:
 			var dir_to_player = (player.position - position).normalized() * speed
 			velocity.x = dir_to_player.x
 			dir.x = sign(player.position.x - position.x)
-			if player.position.y < position.y - 150 and is_on_floor():
-				velocity.y = jump_velocity
-				is_jumping = true
-				just_landed = false
 		elif taking_damage:
 			var knockback_dir = position.direction_to(player.position) * knockback_force
 			velocity.x = knockback_dir.x
@@ -73,8 +66,9 @@ func move(delta):
 
 func handle_animation():
 	if is_dealing_damage:
-		print("soitetaan attack animaatio")
 		anim_sprite.play("Attack")
+		return
+	if taking_damage:
 		return
 	if !dead and !taking_damage and !is_dealing_damage:
 		if is_jumping:
@@ -99,10 +93,8 @@ func handle_animation():
 		else:
 			anim_sprite.play("Walk")
 			anim_sprite.flip_h = (dir.x < 0)
-	elif !dead and taking_damage and !is_dealing_damage:
-		anim_sprite.play("Damage")
-		await get_tree().create_timer(0.8).timeout
-		taking_damage = false
+	#elif !dead and taking_damage and !is_dealing_damage:
+		#anim_sprite.play("Damage")
 	elif dead and is_roaming:
 		is_roaming = false
 		anim_sprite.play("Death")
@@ -113,25 +105,30 @@ func handle_death():
 	self.queue_free()
 
 func _on_anim_finished():
-	var anim = $AnimatedSprite2D.animation
+	var current_anim = $AnimatedSprite2D.animation
 	
-	if anim == "JumpStart":
+	if current_anim == "JumpStart":
 		is_jumping = false
 		if !is_on_floor() and velocity.y < 0:
 			$AnimatedSprite2D.play("JumpLoop")
 		elif !is_on_floor():
 			$AnimatedSprite2D.play("Fall")
 	
-	elif anim == "Land":
+	elif current_anim == "Land":
 		just_landed = false
 		$AnimatedSprite2D.play("Walk")
 	
-	elif anim == "Attack":
+	elif current_anim == "Attack":
 		is_dealing_damage = false
 		if !dead:
 			$AnimatedSprite2D.play("Walk")
 	
-	elif anim == "Death":
+	#elif anim == "Damage":
+		#taking_damage = false
+	#	if !dead:
+		#	$AnimatedSprite2D.play("Walk")
+	
+	elif current_anim == "Death":
 		handle_death()
 
 func _on_direction_timer_timeout() -> void:
@@ -144,16 +141,34 @@ func choose(array):
 	array.shuffle()
 	return array.front()
 
-func take_damage(damage: int) -> void:
+var damage_recovery_time := 0.4
+
+func take_damage(damage: int, knockback: Vector2) -> void:
+	if dead:
+		return
+	print("Enemy take_damage start, hp before:", health)
 	health -= damage
 	taking_damage = true
-	$AnimatedSprite2D.play("Damage")
+	$AttackHitbox.monitoring = false
+	velocity += knockback
+	anim_sprite.play("Damage")
+	print("Playing Damage, current anim:", anim_sprite.animation)
+	await anim_sprite.animation_finished
+	print("Damage finished, hp:", health, "dead:", dead)
 	if health <= health_min:
-		health = health_min
 		dead = true
+		anim_sprite.play("Death")
+		queue_free()
+		return
+	taking_damage = false
+	anim_sprite.play("Walk")
+	can_attack = false
+	await get_tree().create_timer(damage_recovery_time).timeout
+	can_attack = true
 
 func _ready():
 	$AnimatedSprite2D.animation_finished.connect(_on_anim_finished)
+	add_to_group("enemies")
 
 
 func start_hurt() -> void:
@@ -181,27 +196,40 @@ func attack():
 		is_dealing_damage = true
 		anim_sprite.play("Attack")
 		
-		
-		var attack_duration = 0.4
-		var target_pos = player.position
-		var tween = create_tween()
-		tween.tween_property(self, "position", target_pos, attack_duration)
-		
-		$AttackHitbox.monitoring = true
-		
-		await get_tree().create_timer(attack_duration).timeout
-		$AttackHitbox.monitoring = false
-		
-		await get_tree().create_timer(attack_cooldown).timeout
-		can_attack = true
+	var attack_duration = 1.0
+	var target_pos = Vector2(player.position.x, position.y)
+	
+	var tween = create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "position", target_pos, attack_duration)
 
+	$AttackHitbox.monitoring = true
 
-func _on_Hitbox_area_entered(area):
-	if area.name == "PlayerAttack":
-		take_damage(20)
+	await get_tree().create_timer(attack_duration).timeout
+	$AttackHitbox.monitoring = false
 
+	await get_tree().create_timer(attack_cooldown).timeout
+	can_attack = true
+
+func _on_hurtbox_area_entered(area: Area2D) -> void:
+	if area.is_in_group("PlayerAttack"):
+		print("vihuuu")
+		var player := area.get_owner()
+		var dmg := 10
+		if player and player.has_method("get_attack_damage"):
+			dmg = int(player.get_attack_damage())
+		var dir = (global_position - player.global_position).normalized()
+		take_damage(dmg, dir * 120.0)
 
 func _physics_process(delta):
+	if !is_on_floor():
+		velocity.y += gravity * delta
+		velocity.x = 0
+	
+	move(delta)
+	
+	move_and_slide()
 	if !was_on_floor and is_on_floor():
 		just_landed = true
 	was_on_floor = is_on_floor()
@@ -211,11 +239,11 @@ func _physics_process(delta):
 
 
 func  _on_attack_hitbox_area_entered(area: Area2D) -> void:
-	print("AttackHitbox osui:", area.name)
+	print("AttackHitbox osui:", area.name, " ryhmät:", area.get_groups(), " layer:", area.collision_layer)
 	if area.is_in_group("Player"):
-		is_dealing_damage = true
-		if area.has_method("take_damage"):
-			area.take_damage(damage_to_deal)
+		var player = area.get_owner()
+		if player and player.has_method("take_damage"):
+			player.take_damage(damage_to_deal)
 		can_attack = false
 		await get_tree().create_timer(attack_cooldown).timeout
 		can_attack = true
