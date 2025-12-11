@@ -1,195 +1,209 @@
 
 extends CharacterBody2D
 
-# --- Nodes ---
-@onready var anim: AnimatedSprite2D = $AnimatedSprite2D
-@onready var hitbox: Area2D = $Hitbox1
-@onready var hurtbox: Area2D = $Hurtbox
-@onready var detection: Area2D = $DetectionZone
+# --- Config ---
+@export var max_hp: int = 100
+@export var move_speed: float = 60.0
+@export var attack_damage: int = 10
+@export var attack_range: float = 28.0
+@export var attack_cooldown: float = 0.8
 
-# --- Player reference (either via group "player" or set player_path) ---
-@export var player_path: NodePath
-var player: Node2D = null
+# Platformer-specific
+@export var gravity: float = 1200.0
+@export var use_floor_snap: bool = true
+@export var snap_length_config: float = 6.0
 
-# --- Movement (no jumping) ---
-@export var gravity: float = 980.0
-@export var move_speed: float = 140.0
-
-# --- The ONLY range you set in the editor is DetectionZone's CollisionShape ---
-# When the player is INSIDE DetectionZone -> boss follows and may attack.
-# To avoid swinging from far away, we use a SMALL "close distance" gate (in pixels).
-@export var close_distance: float = 32.0  # must be very near to start the attack
-
-# --- Attack (two swings) ---
-@export var attack_cooldown: float = 1.0
-@export var attack_damage: int = 20
-@export var first_swing_active: float = 0.15
-@export var gap_between_swings: float = 0.30
-@export var second_swing_active: float = 0.15
+# Hit response
+@export var hit_stun_time: float = 0.20
+@export var hurt_invuln_time: float = 0.15
 
 # --- State ---
-var player_in_zone: bool = false
-var is_attacking: bool = false
+var hp: int = 0
+var target: Node2D = null
 var can_attack: bool = true
+var can_take_damage: bool = true
+var is_in_hitstun: bool = false
+
+# --- Nodes ---
+@onready var spr: AnimatedSprite2D = $AnimatedSprite2D
+@onready var detection: Area2D = $DetectionArea
+@onready var hurtbox: Area2D = $Hurtbox
+@onready var attack_hitbox: Area2D = $AttackHitbox
 
 func _ready() -> void:
-	set_process_input(false)
-	set_process_unhandled_input(false)
+	hp = max_hp
+	add_to_group("enemies")
+	_play_anim("Walk")
 
-	# Areas
-	hitbox.monitoring = false        # ON only during swing
-	hurtbox.monitoring = true
-	detection.monitoring = true
-
-	# Signals (connect if not already wired in the editor)
-	if not detection.is_connected("area_entered", Callable(self, "_on_detection_enter")):
-		detection.area_entered.connect(_on_detection_enter)
-	if not detection.is_connected("area_exited", Callable(self, "_on_detection_exit")):
-		detection.area_exited.connect(_on_detection_exit)
-
-	if not hitbox.is_connected("area_entered", Callable(self, "_on_hitbox_area_entered")):
-		hitbox.area_entered.connect(_on_hitbox_area_entered)
-	if not hurtbox.is_connected("area_entered", Callable(self, "_on_hurtbox_area_entered")):
-		hurtbox.area_entered.connect(_on_hurtbox_area_entered)
-
-	_resolve_player()
-
-	# Start idle/walk (make sure your sprite is NOT set to auto-play "attack")
-	if anim_has("idle"):
-		anim.play("idle")
+	if use_floor_snap:
+		floor_snap_length = snap_length_config
 	else:
-		anim.play("walk")
+		floor_snap_length = 0.0
+
+	if detection:
+		detection.body_entered.connect(_on_detection_body_entered)
+		detection.body_exited.connect(_on_detection_body_exited)
+		detection.area_entered.connect(_on_detection_area_entered)
+		detection.area_exited.connect(_on_detection_area_exited)
+
+	if hurtbox:
+		hurtbox.area_entered.connect(_on_hurtbox_area_entered)
+		hurtbox.body_entered.connect(_on_hurtbox_body_entered)
+
+	_set_attack_enabled(false)
 
 func _physics_process(delta: float) -> void:
-	# Keep grounded; never jump
+	if hp <= 0:
+		return
+
+	# Gravity
 	if not is_on_floor():
 		velocity.y += gravity * delta
-
-	if player == null:
-		_resolve_player()
-
-	var vx: float = 0.0
-
-	if player_in_zone and player != null:
-		# Face player
-		anim.flip_h = (player.global_position.x < global_position.x)
-
-		var dx: float = player.global_position.x - global_position.x
-		var dist_x: float = abs(dx)
-
-		if not is_attacking:
-			if dist_x > close_distance:
-				# Follow horizontally until we're close enough
-				vx = sign(dx) * move_speed
-			else:
-				# Close enough: stop and attack (only if off cooldown)
-				vx = 0.0
-				if can_attack:
-					attempt_attack()
-		else:
-			# Lock movement during the whole attack sequence
-			vx = 0.0
 	else:
-		# Player not in Detection Zone -> stand idle
-		vx = 0.0
+		velocity.y = max(velocity.y, 0.0)
 
-	velocity.x = vx
+	# During hit-stun, do not override "Damage" animation or move horizontally
+	if is_in_hitstun:
+		velocity.x = 0.0
+		move_and_slide()
+		return
+
+	# Targeting & movement (horizontal only)
+	if target:
+		var to_target: Vector2 = target.global_position - global_position
+		spr.flip_h = to_target.x < 0
+
+		if to_target.length() > attack_range:
+			var dir_x: float = signf(to_target.x)
+			velocity.x = dir_x * move_speed
+			_play_anim("Walk")
+		else:
+			velocity.x = 0.0
+			if can_attack:
+				_do_attack()
+			else:
+				_play_anim("Walk")
+	else:
+		velocity.x = 0.0
+		_play_anim("Walk")
+
 	move_and_slide()
 
-	# Drive non-attack animations
-	if not is_attacking:
-		if abs(velocity.x) < 1.0:
-			if anim_has("idle"): anim.play("idle")
-			# else keep last animation to avoid spam
-		else:
-			anim.play("walk")
-
-# --- Detection Zone handlers ---
-func _on_detection_enter(area: Area2D) -> void:
-	var owner := area.get_parent()
-	# Expect the player's Hurtbox Area to be a child of the player
-	if owner and owner.is_in_group("player"):
-		player_in_zone = true
-
-func _on_detection_exit(area: Area2D) -> void:
-	var owner := area.get_parent()
-	if owner and owner.is_in_group("player"):
-		player_in_zone = false
-
-# --- Two-swing attack sequence ---
-func attempt_attack() -> void:
-	if player == null or not can_attack or is_attacking or not player_in_zone:
+# --- Damage from Player (Hurtbox triggers this via signals) ---
+func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO) -> void:
+	if hp <= 0:
+		return
+	if not can_take_damage:
 		return
 
-	# Check "close enough" RIGHT NOW (horizontal proximity gate)
-	var dist_x: float = abs(player.global_position.x - global_position.x)
-	if dist_x > close_distance:
-		return
+	can_take_damage = false
+	is_in_hitstun = true
 
+	hp = max(hp - amount, 0)
+	print("%s took %d (HP=%d)" % [name, amount, hp])
+
+	# Play "Damage" (capital D as requested)
+	_play_anim("Damage")
+
+	# Apply knockback
+	velocity += knockback
+
+	# Keep the "Damage" anim visible briefly
+	await get_tree().create_timer(hit_stun_time).timeout
+	is_in_hitstun = false
+
+	# Brief i-frames to avoid multi-hit spam
+	await get_tree().create_timer(hurt_invuln_time).timeout
+	can_take_damage = true
+
+	if hp == 0:
+		_die()
+
+func _die() -> void:
+	# Play "Death" (capital D)
+	_play_anim("PowerDown")
+	await get_tree().create_timer(0.6).timeout
+	queue_free()
+
+# --- Enemy -> Player ---
+func get_attack_damage() -> int:
+	return attack_damage
+
+func _do_attack() -> void:
 	can_attack = false
-	is_attacking = true
+	_play_anim("Attack")
 
-	anim.play("attack")  # animation with both swings
+	_set_attack_enabled(true)
+	await get_tree().create_timer(0.20).timeout
+	_set_attack_enabled(false)
 
-	# Swing 1
-	await enable_hitbox_for(first_swing_active)
-
-	# Gap
-	await get_tree().create_timer(gap_between_swings).timeout
-
-	# Swing 2
-	await enable_hitbox_for(second_swing_active)
-
-	# Cooldown
 	await get_tree().create_timer(attack_cooldown).timeout
-	is_attacking = false
 	can_attack = true
 
-func enable_hitbox_for(duration: float) -> void:
-	# Only enable hitbox if the player is still in zone and still close
-	if player == null or not player_in_zone:
-		await get_tree().create_timer(duration).timeout
-		return
+func _set_attack_enabled(on: bool) -> void:
+	if attack_hitbox:
+		var shape: CollisionShape2D = attack_hitbox.get_node("CollisionShape2D") as CollisionShape2D
+		if shape:
+			shape.disabled = not on
+		attack_hitbox.monitoring = on
+		attack_hitbox.monitorable = true
 
-	var dist_x: float = abs(player.global_position.x - global_position.x)
-	if dist_x > close_distance:
-		await get_tree().create_timer(duration).timeout
-		return
+# --- Detection (aggro) ---
+func _on_detection_body_entered(body: Node) -> void:
+	if body is Node2D and body.name == "Player":
+		target = body as Node2D
 
-	hitbox.monitoring = true
-	await get_tree().create_timer(duration).timeout
-	hitbox.monitoring = false
+func _on_detection_body_exited(body: Node) -> void:
+	if body == target:
+		target = null
 
-# --- Combat overlaps ---
-func _on_hitbox_area_entered(area: Area2D) -> void:
-	var target := area.get_parent()
-	if target and target.is_in_group("player") and target.has_method("take_damage"):
-		var dir_vec: Vector2 = (target.global_position - global_position).normalized()
-		target.take_damage(attack_damage, dir_vec * 180.0)
+func _on_detection_area_entered(area: Area2D) -> void:
+	var owner_node: Node = area.get_owner()
+	if owner_node and owner_node is Node2D and owner_node.name == "Player":
+		target = owner_node as Node2D
 
+func _on_detection_area_exited(area: Area2D) -> void:
+	var owner_node: Node = area.get_owner()
+	if owner_node == target:
+		target = null
+
+# --- Hurtbox handlers (player -> enemy hits) ---
 func _on_hurtbox_area_entered(area: Area2D) -> void:
-	var attacker := area.get_parent()
-	var dmg: int = 10
-	if attacker and attacker.has_method("get_attack_damage"):
-		dmg = int(attacker.get_attack_damage())
-	_take_damage(dmg)
+	var owner_node: Node = area.get_owner()
+	if owner_node and owner_node.name == "Player":
+		var dmg: int = attack_damage
+		if area.has_method("get_attack_damage"):
+			dmg = int(area.get_attack_damage())
+		elif owner_node.has_method("get_attack_damage"):
+			dmg = int(owner_node.get_attack_damage())
 
-func _take_damage(amount: int) -> void:
-	if anim_has("PowerDown"):               # matches your animation name/case
-		anim.play("PowerDown")
-	else:
-		anim.play("attack")                  # simple flinch fallback
+		var kb: Vector2 = Vector2.ZERO
+		if area.has_method("get_attack_knockback"):
+			var k: Variant = area.get_attack_knockback()
+			if typeof(k) == TYPE_VECTOR2:
+				kb = k as Vector2
+		else:
+			var dir: float = signf(global_position.x - owner_node.global_position.x)
+			kb = Vector2(dir * 140.0, -80.0)
 
-# --- Helpers ---
-func anim_has(name: String) -> bool:
-	return anim.sprite_frames != null and anim.sprite_frames.has_animation(name)
+		take_damage(dmg, kb)
 
-func _resolve_player() -> void:
-	if player_path != NodePath():
-		var n := get_node_or_null(player_path)
-		if n:
-			player = n as Node2D
-			return
-	var candidates := get_tree().get_nodes_in_group("player")
-	if candidates.size() > 0:
-		player = candidates[0] as Node2D
+func _on_hurtbox_body_entered(body: Node) -> void:
+	if body.name == "Player":
+		var dmg: int = attack_damage
+		if body.has_method("get_attack_damage"):
+			dmg = int(body.get_attack_damage())
+
+		var dir: float = signf(global_position.x - (body as Node2D).global_position.x)
+		var kb: Vector2 = Vector2(dir * 140.0, -80.0)
+
+		take_damage(dmg, kb)
+
+# --- Animation helper ---
+func _play_anim(name: String) -> void:
+	if not spr:
+		return
+	var frames: SpriteFrames = spr.sprite_frames
+	if frames and frames.has_animation(name):
+		if spr.animation != name or not spr.is_playing():
+			spr.play(name)
