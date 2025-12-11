@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://byjfkpmkypwvg" path="res://player/player.tscn" id="2_fj7yv"]
 [ext_resource type="Texture2D" uid="uid://rrexpbudkv" path="res://aseprite/ASEPRITE/Tileset/TILESET.png" id="2_tlwt5"]
 [ext_resource type="PackedScene" uid="uid://dcawgstd56i7m" path="res://glitch.tscn" id="5_036b0"]
-[ext_resource type="PackedScene" uid="uid://disrshloy387v" path="res://enemy_1.tscn" id="5_ioo17"]
+[ext_resource type="PackedScene" uid="uid://4pk3emb4dee7" path="res://enemy_1a.tscn" id="5_k3n1d"]
 [ext_resource type="PackedScene" uid="uid://dmhxjf0enx5rx" path="res://npc.tscn" id="6_k3n1d"]
 [ext_resource type="PackedScene" uid="uid://dgbu50bcup703" path="res://canvas_layer.tscn" id="6_pkg7o"]
 [ext_resource type="PackedScene" uid="uid://bjmfsywajhuxd" path="res://parallax_2d.tscn" id="7_gbfbk"]
@@ -123,8 +123,8 @@ limit_top = -9999648
 limit_right = 10000919
 limit_bottom = 800
 
-[node name="Enemy1" parent="." instance=ExtResource("5_ioo17")]
-position = Vector2(433, 231)
+[node name="Enemy2" parent="." instance=ExtResource("5_k3n1d")]
+position = Vector2(1422, 42)
 
 [node name="npc" parent="." instance=ExtResource("6_k3n1d")]
 position = Vector2(11131, 200)
@@ -198,3 +198,24 @@ visible = false
 
 [node name="DialogueUI" parent="." instance=ExtResource("12_2o6r5")]
 npc_path = NodePath("../npc")
+
+[node name="Enemy1" parent="." instance=ExtResource("5_k3n1d")]
+position = Vector2(2315, -33)
+
+[node name="Enemy3" parent="." instance=ExtResource("5_k3n1d")]
+position = Vector2(3238, -203)
+
+[node name="Enemy4" parent="." instance=ExtResource("5_k3n1d")]
+position = Vector2(3703, -33)
+
+[node name="Enemy5" parent="." instance=ExtResource("5_k3n1d")]
+position = Vector2(6131, 162)
+
+[node name="Enemy6" parent="." instance=ExtResource("5_k3n1d")]
+position = Vector2(6864, 482)
+
+[node name="Enemy7" parent="." instance=ExtResource("5_k3n1d")]
+position = Vector2(7425, -76)
+
+[node name="Enemy8" parent="." instance=ExtResource("5_k3n1d")]
+position = Vector2(7918, -395)

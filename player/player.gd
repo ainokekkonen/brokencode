@@ -1,3 +1,4 @@
+
 extends CharacterBody2D
 
 # --- Movement & combat config ---
@@ -6,14 +7,15 @@ const JUMP_VELOCITY := -600.0
 const MAX_JUMPS := 2
 
 # Animation names
-const ATTACK_ANIM := "attack1"
-const ATTACK_SPRITE_ANIM := "attack"
+const ATTACK_ANIM := "attack1"           # AnimationPlayer clip
+const ATTACK_SPRITE_ANIM := "attack"     # AnimatedSprite2D clip
 
-# Exported so designers can tweak in the editor
+# Tuning
 @export var attack_cooldown: float = 0.30
 @export var attack_damage: int = 30
 @export var max_health: int = 100
 @export var move_speed: float = 160.0
+@export var attack_locked: bool = false   # lock attacks (e.g., during dialogue)
 
 # Nodes
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
@@ -27,25 +29,24 @@ var can_attack: bool = true
 var jump_count: int = 0
 var health: int = 0
 
-# NEW: lock to block attacks (e.g., while dialogue is open)
-@export var attack_locked: bool = false
-
 # Signals
 signal health_changed(new_health)
 
 func _ready() -> void:
 	health = max_health
 	emit_signal("health_changed", health)
+
 	hitbox.add_to_group("PlayerAttack")
 	hurtbox.add_to_group("Player")
 
+	# Signals (Godot 4 style)
 	hitbox.monitoring = false
 	if not hitbox.is_connected("area_entered", Callable(self, "_on_hitbox_area_entered")):
-		hitbox.area_entered.connect(_on_hitbox_area_entered)
+		hitbox.connect("area_entered", Callable(self, "_on_hitbox_area_entered"))
 
 	hurtbox.monitoring = true
 	if not hurtbox.is_connected("area_entered", Callable(self, "_on_hurtbox_area_entered")):
-		hurtbox.area_entered.connect(_on_hurtbox_area_entered)
+		hurtbox.connect("area_entered", Callable(self, "_on_hurtbox_area_entered"))
 
 func _physics_process(delta: float) -> void:
 	# Gravity
@@ -95,59 +96,46 @@ func _physics_process(delta: float) -> void:
 				animated_sprite_2d.play("fall")
 
 func _process(_delta: float) -> void:
-	# Block attack input while locked (e.g., during dialogue)
 	if not attack_locked and Input.is_action_just_pressed("attack"):
 		attempt_attack()
 
-# --- Attack flow ---
+# --- Attack flow (FORCE the hit window ON/OFF) ---
 func attempt_attack() -> void:
-	# Respect the lock and other gates
 	if attack_locked or not can_attack or is_attacking:
 		return
 
 	can_attack = false
 	is_attacking = true
 
+	# Play animations
 	animated_sprite_2d.play(ATTACK_SPRITE_ANIM)
-
-	if anim.has_animation(ATTACK_ANIM):
+	if anim and anim.has_animation(ATTACK_ANIM):
 		anim.play(ATTACK_ANIM)
-	else:
-		push_error("Animation '%s' not found on %s" % [ATTACK_ANIM, anim.name])
-		end_attack_state()
-		return
-	
-	await get_tree().create_timer(0.2).timeout
-	hitbox.monitoring = false
+
+	# Ensure hitbox is on during the strike
+	await enable_hitbox_for(0.18)  # tune this to match your swing
+
 	is_attacking = false
-	
 	await get_tree().create_timer(attack_cooldown).timeout
 	can_attack = true
 
-# Called from AnimationPlayer
+# Allow AnimationPlayer tracks or other systems to call this too
+func enable_hitbox_for(seconds: float) -> void:
+	hitbox_enable()
+	await get_tree().create_timer(seconds).timeout
+	hitbox_disable()
+
 func hitbox_enable() -> void:
+	var shape := hitbox.get_node("CollisionShape2D") as CollisionShape2D
+	if shape: shape.disabled = false
 	hitbox.monitoring = true
+	print("[Player] Hitbox ENABLED")
 
 func hitbox_disable() -> void:
+	var shape := hitbox.get_node("CollisionShape2D") as CollisionShape2D
+	if shape: shape.disabled = true
 	hitbox.monitoring = false
-
-func end_attack_state() -> void:
-	is_attacking = false
-
-# --- NEW: external API to lock/unlock attacks (used by World/DialogueUI) ---
-func lock_attacks(lock: bool) -> void:
-	attack_locked = lock
-	if lock and is_attacking:
-		# Cancel any ongoing attack immediately
-		hitbox_disable()
-		is_attacking = false
-		if anim and anim.is_playing():
-			anim.stop()
-		# Snap to a safe state
-		if is_on_floor():
-			animated_sprite_2d.play("idle")
-		else:
-			animated_sprite_2d.play("fall")
+	print("[Player] Hitbox DISABLED")
 
 # --- Damage application to enemies ---
 func _on_hitbox_area_entered(area: Area2D) -> void:
@@ -157,31 +145,49 @@ func _on_hitbox_area_entered(area: Area2D) -> void:
 		var dir: Vector2 = (enemy.global_position - global_position).normalized()
 		enemy.take_damage(attack_damage, dir * 120.0)
 
-
-# --- Damage animaatio ---
+# --- Taking damage from enemy hitboxes ---
 var damage_recovery_time := 0.4
 var is_taking_damage: bool = false
 
 func take_damage(amount: int) -> void:
 	if health <= 0:
 		return
+
 	health = clamp(health - amount, 0, max_health)
 	emit_signal("health_changed", health)
+
 	if health == 0:
 		_on_player_defeated()
 		return
+
 	is_taking_damage = true
-	animated_sprite_2d.play("hurt")   # tee animaatio nimellä "damage"
-	anim.play("hurt")                 # jos AnimationPlayerissä on vastaava animaatio
-	# Pieni viive ennen paluuta normaaliin tilaan
+
+	# AnimatedSprite2D "hurt" fallbacks
+	var frames := animated_sprite_2d.sprite_frames
+	if frames:
+		if frames.has_animation("hurt"):
+			animated_sprite_2d.play("hurt")
+		elif frames.has_animation("Damage"):
+			animated_sprite_2d.play("Damage")
+		elif frames.has_animation("damage"):
+			animated_sprite_2d.play("damage")
+
+	# AnimationPlayer fallback
+	if anim:
+		if anim.has_animation("hurt"):
+			anim.play("hurt")
+		elif anim.has_animation("Damage"):
+			anim.play("Damage")
+		elif anim.has_animation("damage"):
+			anim.play("damage")
+
 	await get_tree().create_timer(damage_recovery_time).timeout
 	is_taking_damage = false
-	# Palauta sopiva animaatio
+
 	if is_on_floor():
 		animated_sprite_2d.play("idle")
 	else:
 		animated_sprite_2d.play("fall")
-
 
 func heal(amount: int) -> void:
 	health = clamp(health + amount, 0, max_health)
@@ -212,7 +218,6 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("heal"):
 		heal(20)
 
-# --- Taking damage from enemy hitboxes ---
 func _on_hurtbox_area_entered(area: Area2D) -> void:
 	print("player hurtbox osui:", area.name)
 	var enemy := area.get_owner()
@@ -220,3 +225,16 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 	if enemy and enemy.has_method("get_attack_damage"):
 		dmg = int(enemy.get_attack_damage())
 	take_damage(dmg)
+
+# External API (World/DialogueUI)
+func lock_attacks(lock: bool) -> void:
+	attack_locked = lock
+	if lock and is_attacking:
+		hitbox_disable()
+		is_attacking = false
+		if anim and anim.is_playing():
+			anim.stop()
+		if is_on_floor():
+			animated_sprite_2d.play("idle")
+		else:
+			animated_sprite_2d.play("fall")

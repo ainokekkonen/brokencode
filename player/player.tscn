@@ -653,14 +653,14 @@ height = 76.0
 
 [node name="Player" type="CharacterBody2D" groups=["player"]]
 position = Vector2(2, -5)
-collision_layer = 3
+collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_rkbax")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." groups=["player"]]
 position = Vector2(33, 18)
 sprite_frames = SubResource("SpriteFrames_s7qer")
-animation = &"run"
+animation = &"hurt"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(34, 13)
@@ -673,7 +673,7 @@ libraries = {
 
 [node name="Hitbox" type="Area2D" parent="." groups=["PlayerAttack"]]
 collision_layer = 2
-collision_mask = 8
+collision_mask = 16
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
 position = Vector2(54, 15)
@@ -681,7 +681,7 @@ shape = SubResource("CircleShape2D_2ieo8")
 
 [node name="Hurtbox" type="Area2D" parent="." groups=["Player", "player"]]
 collision_layer = 4
-collision_mask = 16
+collision_mask = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
 position = Vector2(36, 15)
